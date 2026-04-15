@@ -1,13 +1,14 @@
 import { createPortal } from "react-dom";
 import { useContext, useState, useEffect, useCallback, useMemo } from "react";
 import { Icon } from "@mdi/react";
-import { mdiClose, mdiLogout, mdiAccountCircleOutline, mdiAccountGroup, mdiClockStarFourPointsOutline, mdiCloudDownload } from "@mdi/js";
+import { mdiClose, mdiLogout, mdiAccountCircleOutline, mdiAccountGroup, mdiClockStarFourPointsOutline, mdiCloudDownload, mdiGit } from "@mdi/js";
 import { UserContext } from "@/common/contexts/UserContext.jsx";
 import { ActionConfirmDialog } from "@/common/components/ActionConfirmDialog/ActionConfirmDialog.jsx";
 import Account from "@/pages/Settings/pages/Account";
 import Sessions from "@/pages/Settings/pages/Sessions";
 import Users from "@/pages/Settings/pages/Users";
 import Sources from "@/pages/Settings/pages/Sources";
+import GitCredentials from "@/pages/Settings/pages/GitCredentials";
 import "./styles.sass";
 
 const userPages = [
@@ -18,6 +19,7 @@ const userPages = [
 const adminPages = [
     { title: "Users", key: "users", icon: mdiAccountGroup, content: <Users /> },
     { title: "Sources", key: "sources", icon: mdiCloudDownload, content: <Sources /> },
+    { title: "Git Credentials", key: "git-credentials", icon: mdiGit, content: <GitCredentials /> },
 ];
 
 export const SettingsDialog = ({ open, onClose, initialTab = "account" }) => {
