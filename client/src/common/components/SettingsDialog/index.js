@@ -1,0 +1,1 @@
+export { SettingsDialog as default } from "./SettingsDialog.jsx";
