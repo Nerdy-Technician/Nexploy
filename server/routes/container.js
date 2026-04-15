@@ -3,7 +3,6 @@ const { containerActionValidation } = require("../validations/container");
 const { listContainers, getContainer, refreshContainers, containerAction, removeContainer, getContainerLogs, getContainerStats } = require("../controllers/container");
 const { authenticate } = require("../middlewares/auth");
 const { validateSchema } = require("../utils/schema");
-const { sendError } = require("../utils/error");
 const { upgradeWebSocket } = require("../utils/websocket");
 const Container = require("../models/Container");
 const Server = require("../models/Server");
@@ -27,8 +26,7 @@ app.post("/refresh", authenticate, async (c) => {
 });
 
 app.get("/:id", authenticate, async (c) => {
-    const id = parseInt(c.req.param("id"), 10);
-    if (isNaN(id)) return sendError(c, 400, 400, "Invalid container ID");
+    const id = c.req.param("id");
 
     const container = await getContainer(id);
     if (container?.code) return c.json(container, 404);
@@ -37,8 +35,7 @@ app.get("/:id", authenticate, async (c) => {
 });
 
 app.get("/:id/stats", authenticate, async (c) => {
-    const id = parseInt(c.req.param("id"), 10);
-    if (isNaN(id)) return sendError(c, 400, 400, "Invalid container ID");
+    const id = c.req.param("id");
 
     const stats = await getContainerStats(id);
     if (stats?.code) return c.json(stats, stats.code === 401 ? 404 : 400);
@@ -47,19 +44,18 @@ app.get("/:id/stats", authenticate, async (c) => {
 });
 
 app.get("/:id/logs", authenticate, async (c) => {
-    const id = parseInt(c.req.param("id"), 10);
-    if (isNaN(id)) return sendError(c, 400, 400, "Invalid container ID");
+    const id = c.req.param("id");
 
     const tail = parseInt(c.req.query("tail"), 10) || 100;
-    const result = await getContainerLogs(id, tail);
+    const timestamps = c.req.query("timestamps") === "true";
+    const result = await getContainerLogs(id, tail, timestamps);
     if (result?.code) return c.json(result, result.code === 401 ? 404 : 400);
 
     return c.json(result);
 });
 
 app.post("/:id/action", authenticate, async (c) => {
-    const id = parseInt(c.req.param("id"), 10);
-    if (isNaN(id)) return sendError(c, 400, 400, "Invalid container ID");
+    const id = c.req.param("id");
 
     const body = await c.req.json();
     const error = validateSchema(containerActionValidation, body);
@@ -72,8 +68,7 @@ app.post("/:id/action", authenticate, async (c) => {
 });
 
 app.delete("/:id", authenticate, async (c) => {
-    const id = parseInt(c.req.param("id"), 10);
-    if (isNaN(id)) return sendError(c, 400, 400, "Invalid container ID");
+    const id = c.req.param("id");
 
     const force = c.req.query("force") === "true";
     const result = await removeContainer(id, force);
@@ -81,6 +76,78 @@ app.delete("/:id", authenticate, async (c) => {
 
     return c.json(result);
 });
+
+app.get("/:id/logs/stream", upgradeWebSocket(async (c) => {
+    const token = c.req.query("token");
+    const tail = parseInt(c.req.query("tail"), 10) || 100;
+    let authError = null;
+    let sshSession = null;
+    let containerId = null;
+    let channel = null;
+
+    try {
+        if (!token) throw { code: 4401, msg: "Authentication required" };
+
+        const session = await Session.findOne({ where: { token } });
+        if (!session) throw { code: 4401, msg: "Invalid token" };
+
+        if (!await Account.findByPk(session.accountId)) throw { code: 4401, msg: "Account not found" };
+
+        const containerIdParam = c.req.param("id");
+
+        const container = await Container.findOne({ where: { containerId: containerIdParam } });
+        if (!container) throw { code: 4404, msg: "Container not found" };
+
+        containerId = container.containerId;
+
+        const server = await Server.findByPk(container.serverId);
+        if (!server || server.status !== "active") throw { code: 4400, msg: "Server not available" };
+
+        sshSession = await sessionManager.getOrCreateSession(server);
+    } catch (err) {
+        if (err.code && err.msg) {
+            authError = err;
+        } else {
+            authError = { code: 4500, msg: `Connection failed: ${err.message}` };
+        }
+    }
+
+    return {
+        onOpen(evt, ws) {
+            if (authError) {
+                ws.close(authError.code, authError.msg);
+                return;
+            }
+
+            const sshClient = sshSession.adapter.client;
+            sshClient.exec(`docker logs --follow --tail=${tail} ${containerId} 2>&1`, (err, ch) => {
+                if (err) {
+                    logger.error("Log stream exec failed", { containerId, error: err.message });
+                    ws.close(4500, "Failed to start log stream");
+                    return;
+                }
+
+                channel = ch;
+
+                ch.on("data", (data) => {
+                    try { ws.send(data.toString("utf-8")); } catch {}
+                });
+
+                ch.stderr.on("data", (data) => {
+                    try { ws.send(data.toString("utf-8")); } catch {}
+                });
+
+                ch.on("close", () => {
+                    try { ws.close(1000, "Log stream ended"); } catch {}
+                });
+            });
+        },
+        onMessage() {},
+        onClose() {
+            if (channel) channel.close();
+        },
+    };
+}));
 
 app.get("/:id/terminal", upgradeWebSocket(async (c) => {
     const token = c.req.query("token");
@@ -97,10 +164,9 @@ app.get("/:id/terminal", upgradeWebSocket(async (c) => {
 
         if (!await Account.findByPk(session.accountId)) throw { code: 4401, msg: "Account not found" };
 
-        const id = parseInt(c.req.param("id"), 10);
-        if (isNaN(id)) throw { code: 4400, msg: "Invalid container ID" };
+        const containerIdParam = c.req.param("id");
 
-        const container = await Container.findByPk(id);
+        const container = await Container.findOne({ where: { containerId: containerIdParam } });
         if (!container) throw { code: 4404, msg: "Container not found" };
 
         containerId = container.containerId;

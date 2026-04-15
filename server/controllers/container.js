@@ -23,8 +23,8 @@ module.exports.listContainers = async (serverId = null) => {
     return containers.map(parseContainer);
 };
 
-module.exports.getContainer = async (id) => {
-    const container = await Container.findByPk(id);
+module.exports.getContainer = async (containerId) => {
+    const container = await Container.findOne({ where: { containerId } });
     if (!container) return { code: 401, message: "Container not found" };
     return parseContainer(container);
 };
@@ -34,8 +34,8 @@ module.exports.refreshContainers = async (serverId = null) => {
     return { message: "Container refresh started" };
 };
 
-module.exports.containerAction = async (id, action) => {
-    const container = await Container.findByPk(id);
+module.exports.containerAction = async (containerId, action) => {
+    const container = await Container.findOne({ where: { containerId } });
     if (!container) return { code: 401, message: "Container not found" };
 
     const server = await Server.findByPk(container.serverId);
@@ -51,16 +51,16 @@ module.exports.containerAction = async (id, action) => {
         await docker.post(`/containers/${container.containerId}/${action}`);
 
         await createTask("UpdateContainers", { serverId: server.id });
-        logger.info(`Container action executed: ${action}`, { containerId: id, dockerId: container.containerId });
+        logger.info(`Container action executed: ${action}`, { containerId: container.containerId });
         return { message: `Container ${action} successful` };
     } catch (err) {
-        logger.error(`Container action failed: ${action}`, { containerId: id, error: err.message });
+        logger.error(`Container action failed: ${action}`, { containerId: container.containerId, error: err.message });
         return { code: 404, message: `Action failed: ${err.message}` };
     }
 };
 
-module.exports.removeContainer = async (id, force = false) => {
-    const container = await Container.findByPk(id);
+module.exports.removeContainer = async (containerId, force = false) => {
+    const container = await Container.findOne({ where: { containerId } });
     if (!container) return { code: 401, message: "Container not found" };
 
     const server = await Server.findByPk(container.serverId);
@@ -73,17 +73,17 @@ module.exports.removeContainer = async (id, force = false) => {
 
         await docker.del(`/containers/${container.containerId}${forceParam}`);
 
-        await Container.destroy({ where: { id } });
-        logger.info("Container removed", { containerId: id, dockerId: container.containerId });
+        await Container.destroy({ where: { id: container.id } });
+        logger.info("Container removed", { containerId: container.containerId });
         return { message: "Container removed successfully" };
     } catch (err) {
-        logger.error("Container removal failed", { containerId: id, error: err.message });
+        logger.error("Container removal failed", { containerId: container.containerId, error: err.message });
         return { code: 404, message: `Removal failed: ${err.message}` };
     }
 };
 
-module.exports.getContainerLogs = async (id, tail = 100) => {
-    const container = await Container.findByPk(id);
+module.exports.getContainerLogs = async (containerId, tail = 100, timestamps = false) => {
+    const container = await Container.findOne({ where: { containerId } });
     if (!container) return { code: 401, message: "Container not found" };
 
     const server = await Server.findByPk(container.serverId);
@@ -91,18 +91,19 @@ module.exports.getContainerLogs = async (id, tail = 100) => {
 
     try {
         const session = await sessionManager.getOrCreateSession(server);
-        const docker = dockerApi(session);
-
-        const stdout = await docker.get(`/containers/${container.containerId}/logs?stdout=true&stderr=true&tail=${tail}`);
-
-        return { logs: stdout.replace(/[\x00-\x08]/g, "") };
+        const tsFlag = timestamps ? " --timestamps" : "";
+        const result = await session.exec(
+            `docker logs --tail=${parseInt(tail)}${tsFlag} ${container.containerId} 2>&1`,
+            { stream: false }
+        );
+        return { logs: result.stdout };
     } catch (err) {
         return { code: 404, message: `Failed to get logs: ${err.message}` };
     }
 };
 
-module.exports.getContainerStats = async (id) => {
-    const container = await Container.findByPk(id);
+module.exports.getContainerStats = async (containerId) => {
+    const container = await Container.findOne({ where: { containerId } });
     if (!container) return { code: 401, message: "Container not found" };
 
     const server = await Server.findByPk(container.serverId);
