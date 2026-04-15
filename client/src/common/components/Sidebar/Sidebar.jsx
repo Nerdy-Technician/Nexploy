@@ -6,28 +6,32 @@ import {
     mdiServerOutline,
     mdiLayers,
     mdiDocker,
+    mdiAccountCogOutline,
 } from "@mdi/js";
 import Icon from "@mdi/react";
 import { useLocation, useNavigate } from "react-router-dom";
-import { useContext, useState, useRef } from "react";
+import { useContext, useState, useRef, useEffect } from "react";
 import { UserContext } from "@/common/contexts/UserContext.jsx";
 import { ActionConfirmDialog } from "@/common/components/ActionConfirmDialog/ActionConfirmDialog.jsx";
 import Tooltip from "@/common/components/Tooltip";
+import { SettingsDialog } from "@/common/components/SettingsDialog/SettingsDialog.jsx";
 
 export const Sidebar = () => {
     const location = useLocation();
     const navigate = useNavigate();
 
+    const [settingsDialogOpen, setSettingsDialogOpen] = useState(false);
     const [logoutDialogOpen, setLogoutDialogOpen] = useState(false);
+    const [userMenuOpen, setUserMenuOpen] = useState(false);
     const [logoClicked, setLogoClicked] = useState(false);
     const [mouseOffset, setMouseOffset] = useState({ x: 0, y: 0 });
-    
+
     const logoRef = useRef(null);
+    const hoverTimeoutRef = useRef(null);
 
     const { logout, user } = useContext(UserContext);
 
     const navigation = [
-        { title: "Settings", path: "/settings", icon: mdiCog },
         { title: "Servers", path: "/servers", icon: mdiServerOutline },
         { title: "Containers", path: "/containers", icon: mdiDocker },
         { title: "Stacks", path: "/stacks", icon: mdiLayers },
@@ -38,6 +42,24 @@ export const Sidebar = () => {
         return location.pathname.startsWith(path);
     };
 
+    const getUserInitials = () => {
+        if (user?.firstName && user?.lastName) {
+            return `${user.firstName[0]}${user.lastName[0]}`.toUpperCase();
+        }
+        return user?.username?.slice(0, 2).toUpperCase() || "??";
+    };
+
+    const handleMouseEnter = () => {
+        clearTimeout(hoverTimeoutRef.current);
+        setUserMenuOpen(true);
+    };
+
+    const handleMouseLeave = () => {
+        hoverTimeoutRef.current = setTimeout(() => setUserMenuOpen(false), 150);
+    };
+
+    useEffect(() => () => clearTimeout(hoverTimeoutRef.current), []);
+
     const handleLogoClick = () => {
         setLogoClicked(true);
         setTimeout(() => setLogoClicked(false), 800);
@@ -46,17 +68,17 @@ export const Sidebar = () => {
 
     const handleMouseMove = (e) => {
         if (!logoRef.current) return;
-        
+
         const rect = logoRef.current.getBoundingClientRect();
         const centerX = rect.left + rect.width / 2;
         const centerY = rect.top + rect.height / 2;
-        
+
         const relativeX = (e.clientX - centerX) / (rect.width / 2);
         const relativeY = (e.clientY - centerY) / (rect.height / 2);
-        
+
         setMouseOffset({ x: -relativeX * 1.5, y: -relativeY * 1.5 });
     };
-    const handleMouseLeave = () => {
+    const handleLogoMouseLeave = () => {
         setMouseOffset({ x: 0, y: 0 });
     };
 
@@ -68,12 +90,12 @@ export const Sidebar = () => {
                                      onConfirm={logout} />
                 <div className="sidebar-top">
                     <Tooltip text="Nexploy">
-                        <div 
+                        <div
                             ref={logoRef}
-                            className={`sidebar-logo ${logoClicked ? "clicked" : ""}`} 
+                            className={`sidebar-logo ${logoClicked ? "clicked" : ""}`}
                             onClick={handleLogoClick}
                             onMouseMove={handleMouseMove}
-                            onMouseLeave={handleMouseLeave}
+                            onMouseLeave={handleLogoMouseLeave}
                         >
                             <svg width="271" height="298" viewBox="0 0 271 298" fill="none" xmlns="http://www.w3.org/2000/svg">
                                 <g className="hex-layer-1" style={{
@@ -130,7 +152,6 @@ export const Sidebar = () => {
                             </svg>
                         </div>
                     </Tooltip>
-                    <hr/>
                     <nav>
                         {navigation.map((item, index) => {
                             return (
@@ -145,14 +166,44 @@ export const Sidebar = () => {
                     </nav>
                 </div>
 
-                <div className="log-out-area">
-                    <Tooltip text={"Log out"}>
-                        <div className="log-out-btn" onClick={() => setLogoutDialogOpen(true)}>
-                            <Icon path={mdiLogout} />
+                <div className="sidebar-bottom">
+                    <div className="user-account-area" onMouseEnter={handleMouseEnter} onMouseLeave={handleMouseLeave}>
+                        <Tooltip text={user?.username || "Account"} disabled={userMenuOpen}>
+                            <div className={`user-btn ${userMenuOpen ? 'active' : ''}`}>
+                                <Icon path={mdiAccountCogOutline} />
+                            </div>
+                        </Tooltip>
+                        <div className={`user-menu ${userMenuOpen ? 'open' : ''}`}>
+                            <div className="user-menu-header">
+                                <div className="user-avatar">
+                                    <span>{getUserInitials()}</span>
+                                </div>
+                                <div className="user-info">
+                                    <span className="user-name">
+                                        {user?.firstName && user?.lastName
+                                            ? `${user.firstName} ${user.lastName}`
+                                            : user?.username || "Account"}
+                                    </span>
+                                    <span className="user-username">@{user?.username}</span>
+                                </div>
+                            </div>
+                            <div className="user-menu-separator" />
+                            <div className={`user-menu-item ${settingsDialogOpen ? 'active' : ''}`}
+                                 onClick={() => { setSettingsDialogOpen(true); setUserMenuOpen(false); }}>
+                                <Icon path={mdiCog} className="menu-icon" />
+                                <span className="menu-label">Settings</span>
+                            </div>
+                            <div className="user-menu-separator" />
+                            <div className="user-menu-item danger"
+                                 onClick={() => { setLogoutDialogOpen(true); setUserMenuOpen(false); }}>
+                                <Icon path={mdiLogout} className="menu-icon" />
+                                <span className="menu-label">Logout</span>
+                            </div>
                         </div>
-                    </Tooltip>
+                    </div>
                 </div>
             </div>
+            <SettingsDialog open={settingsDialogOpen} onClose={() => setSettingsDialogOpen(false)} />
         </>
     );
 };
