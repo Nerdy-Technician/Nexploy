@@ -23,6 +23,8 @@ const serviceRoutes = require("./routes/service");
 const sourceRoutes = require("./routes/source");
 const appsRoutes = require("./routes/apps");
 const imageRoutes = require("./routes/image");
+const deploymentRoutes = require("./routes/deployment");
+const gitCredentialRoutes = require("./routes/gitCredential");
 require("./utils/folder");
 
 process.on("uncaughtException", (err) => errorHandling(err));
@@ -42,6 +44,8 @@ app.route("/api/servers", serverRoutes);
 app.route("/api/containers", containerRoutes);
 app.route("/api/images", imageRoutes);
 app.route("/api/stacks", stackRoutes);
+app.route("/api/deployments", deploymentRoutes);
+app.route("/api/git-credentials", gitCredentialRoutes);
 
 app.route("/api/sources", sourceRoutes);
 app.route("/api/apps", appsRoutes);
