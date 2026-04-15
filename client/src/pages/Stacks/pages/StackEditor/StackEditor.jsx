@@ -31,7 +31,7 @@ import {
 } from "@mdi/js";
 import Button from "@/common/components/Button";
 import IconInput from "@/common/components/IconInput";
-import { ComposerizeDialog } from "../../components/ComposerizeDialog";
+import ComposerizeDialog from "../../components/ComposerizeDialog";
 
 const DEFAULT_COMPOSE = `services:
   app:
