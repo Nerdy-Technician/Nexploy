@@ -13,14 +13,14 @@ export default () => {
             <UserProvider>
                 <SessionProvider>
                     <div className="content-wrapper">
+                        <Suspense fallback={<Loading />}>
+                            <Sidebar />
+                        </Suspense>
                         <div className="main-content">
                             <Suspense fallback={<Loading />}>
                                 <Outlet />
                             </Suspense>
                         </div>
-                        <Suspense fallback={<Loading />}>
-                            <Sidebar />
-                        </Suspense>
                     </div>
                 </SessionProvider>
             </UserProvider>
