@@ -4,7 +4,7 @@ import { mdiPlus, mdiServerOutline } from "@mdi/js";
 import AllServers from "./pages/AllServers";
 import { useState } from "react";
 import Button from "@/common/components/Button";
-import AddServerDialog from "./components/AddServerDialog";
+import ServerDialog from "./components/ServerDialog";
 
 export const Servers = () => {
     const [showAddDialog, setShowAddDialog] = useState(false);
@@ -39,7 +39,7 @@ export const Servers = () => {
                 <AllServers key={refreshKey} />
             </div>
 
-            <AddServerDialog 
+            <ServerDialog 
                 open={showAddDialog} 
                 onClose={() => setShowAddDialog(false)}
                 onServerCreated={handleServerCreated}

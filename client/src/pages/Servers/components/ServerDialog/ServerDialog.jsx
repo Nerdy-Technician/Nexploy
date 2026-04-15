@@ -6,7 +6,7 @@ import Button from "@/common/components/Button";
 import WizardSteps from "@/common/components/WizardSteps";
 import SelectBox from "@/common/components/SelectBox";
 import { useToast } from "@/common/contexts/ToastContext.jsx";
-import { getRequest, postRequest } from "@/common/utils/RequestUtil.js";
+import { getRequest, postRequest, patchRequest } from "@/common/utils/RequestUtil.js";
 import { Icon } from "@mdi/react";
 import { 
     mdiServer, 
@@ -26,7 +26,8 @@ const STEPS = [
     { key: "user", label: "User", icon: mdiAccount }
 ];
 
-export const AddServerDialog = ({ open, onClose, onServerCreated }) => {
+export const ServerDialog = ({ open, onClose, onServerCreated, server = null }) => {
+    const isEditMode = !!server;
     const { sendToast } = useToast();
     const [currentStep, setCurrentStep] = useState(0);
     const [name, setName] = useState("");
@@ -50,8 +51,17 @@ export const AddServerDialog = ({ open, onClose, onServerCreated }) => {
                 )];
                 setExistingLocations(locations);
             }).catch(() => {});
+
+            if (server) {
+                setName(server.name || "");
+                setLocation(server.location || "");
+                setHost(server.host || "");
+                setPort(String(server.port || 22));
+                setUsername(server.username || "");
+                setAuthMethod(server.authMethod || "password");
+            }
         }
-    }, [open]);
+    }, [open, server]);
 
     const authOptions = [
         { label: "Password", value: "password" },
@@ -71,6 +81,7 @@ export const AddServerDialog = ({ open, onClose, onServerCreated }) => {
         if (step === 0) return name.trim() !== "" && host.trim() !== "" && port.trim() !== "";
         if (step === 1) {
             if (!username.trim()) return false;
+            if (isEditMode) return true;
             if (authMethod === "password" && !password.trim()) return false;
             if (authMethod === "ssh-key" && !sshKey.trim()) return false;
             return true;
@@ -100,19 +111,28 @@ export const AddServerDialog = ({ open, onClose, onServerCreated }) => {
         setLoading(true);
 
         try {
-            const serverData = {
-                name,
-                location: location || null,
-                type: "ssh",
-                host,
-                port: parseInt(port, 10),
-                username,
-                authMethod,
-                ...(authMethod === "password" ? { password } : { sshKey, passphrase: passphrase || null })
-            };
-
-            const result = await postRequest("servers", serverData);
-            sendToast("Success", "Server added successfully");
+            let result;
+            if (isEditMode) {
+                const updateData = {
+                    name,
+                    location: location || null,
+                };
+                result = await patchRequest(`servers/${server.id}`, updateData);
+                sendToast("Success", "Server updated successfully");
+            } else {
+                const serverData = {
+                    name,
+                    location: location || null,
+                    type: "ssh",
+                    host,
+                    port: parseInt(port, 10),
+                    username,
+                    authMethod,
+                    ...(authMethod === "password" ? { password } : { sshKey, passphrase: passphrase || null })
+                };
+                result = await postRequest("servers", serverData);
+                sendToast("Success", "Server added successfully");
+            }
             
             if (onServerCreated) {
                 onServerCreated(result);
@@ -120,7 +140,7 @@ export const AddServerDialog = ({ open, onClose, onServerCreated }) => {
             
             handleClose();
         } catch (err) {
-            sendToast("Error", err.message || "Failed to add server");
+            sendToast("Error", err.message || (isEditMode ? "Failed to update server" : "Failed to add server"));
         } finally {
             setLoading(false);
         }
@@ -144,14 +164,14 @@ export const AddServerDialog = ({ open, onClose, onServerCreated }) => {
 
     return (
         <DialogProvider open={open} onClose={handleClose}>
-            <div className="add-server-dialog">
+            <div className="server-dialog">
                 <div className="dialog-header">
                     <div className="dialog-icon">
                         <Icon path={mdiServer} />
                     </div>
                     <div className="dialog-title-section">
-                        <h2>Add Server</h2>
-                        <p>Connect a new server to Nexploy</p>
+                        <h2>{isEditMode ? "Edit Server" : "Add Server"}</h2>
+                        <p>{isEditMode ? "Update server configuration" : "Connect a new server to Nexploy"}</p>
                     </div>
                 </div>
 
@@ -250,10 +270,10 @@ export const AddServerDialog = ({ open, onClose, onServerCreated }) => {
                                             type="password"
                                             id="password"
                                             icon={mdiLock}
-                                            placeholder="Enter password"
+                                            placeholder={isEditMode ? "Leave empty to keep current" : "Enter password"}
                                             value={password}
                                             setValue={setPassword}
-                                            required
+                                            required={!isEditMode}
                                         />
                                     </div>
                                 ) : (
@@ -266,7 +286,7 @@ export const AddServerDialog = ({ open, onClose, onServerCreated }) => {
                                                     id="ssh-key"
                                                     type="file"
                                                     onChange={readFile}
-                                                    required={!sshKey}
+                                                    required={!isEditMode && !sshKey}
                                                 />
                                                 {sshKeyFileName && <span className="file-name">{sshKeyFileName}</span>}
                                             </div>
@@ -295,7 +315,7 @@ export const AddServerDialog = ({ open, onClose, onServerCreated }) => {
                             <Button text="Cancel" type="secondary" onClick={handleClose} buttonType="button" disabled={loading} />
                         )}
                         <Button 
-                            text={isLastStep ? (loading ? "Adding..." : "Add Server") : "Next"} /* eslint-disable-line no-nested-ternary */
+                            text={isLastStep ? (loading ? "Saving..." : (isEditMode ? "Save" : "Add Server")) : "Next"}
                             icon={isLastStep ? undefined : mdiArrowRight}
                             buttonType="submit" 
                             disabled={loading || !isStepValid(currentStep)} 

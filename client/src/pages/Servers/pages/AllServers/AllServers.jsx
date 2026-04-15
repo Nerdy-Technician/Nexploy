@@ -2,11 +2,12 @@ import "./styles.sass";
 import { getRequest, postRequest, deleteRequest } from "@/common/utils/RequestUtil.js";
 import ServerCard from "../../components/ServerCard";
 import { Icon } from "@mdi/react";
-import { mdiLoading, mdiDelete, mdiRefresh, mdiConnection, mdiMapMarker } from "@mdi/js";
+import { mdiLoading, mdiDelete, mdiRefresh, mdiConnection, mdiMapMarker, mdiPencil } from "@mdi/js";
 import { useState, useEffect, useCallback, useMemo } from "react";
 import { useToast } from "@/common/contexts/ToastContext.jsx";
 import { ContextMenu, ContextMenuItem, useContextMenu } from "@/common/components/ContextMenu";
 import { ActionConfirmDialog } from "@/common/components/ActionConfirmDialog/ActionConfirmDialog.jsx";
+import ServerDialog from "../../components/ServerDialog";
 
 export const AllServers = () => {
     const { sendToast } = useToast();
@@ -14,6 +15,7 @@ export const AllServers = () => {
     const [loading, setLoading] = useState(true);
     const [contextServer, setContextServer] = useState(null);
     const [confirmDeleteDialogOpen, setConfirmDeleteDialogOpen] = useState(false);
+    const [editDialogOpen, setEditDialogOpen] = useState(false);
     const contextMenu = useContextMenu();
 
     const fetchServers = useCallback(async () => {
@@ -135,6 +137,13 @@ export const AllServers = () => {
                 text={`Are you sure you want to delete "${contextServer?.name}"?`}
             />
 
+            <ServerDialog
+                open={editDialogOpen}
+                onClose={() => setEditDialogOpen(false)}
+                onServerCreated={() => fetchServers()}
+                server={contextServer}
+            />
+
             <ContextMenu
                 isOpen={contextMenu.isOpen}
                 position={contextMenu.position}
@@ -148,6 +157,11 @@ export const AllServers = () => {
                         onClick={() => handleReprovision(contextServer)}
                     />
                 )}
+                <ContextMenuItem
+                    icon={mdiPencil}
+                    label="Edit Server"
+                    onClick={() => setEditDialogOpen(true)}
+                />
                 <ContextMenuItem
                     icon={mdiConnection}
                     label="Test Connection"
