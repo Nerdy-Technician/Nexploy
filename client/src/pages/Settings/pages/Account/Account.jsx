@@ -9,7 +9,7 @@ import { patchRequest, postRequest } from "@/common/utils/RequestUtil.js";
 import TwoFactorAuthentication from "@/pages/Settings/pages/Account/dialogs/TwoFactorAuthentication";
 import PasswordChange from "@/pages/Settings/pages/Account/dialogs/PasswordChange";
 import SelectBox from "@/common/components/SelectBox";
-import Icon from "@mdi/react";
+import { Icon } from "@mdi/react";
 
 export const Account = () => {
     const [twoFactorOpen, setTwoFactorOpen] = useState(false);

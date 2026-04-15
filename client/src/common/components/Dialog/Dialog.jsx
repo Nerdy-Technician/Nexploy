@@ -1,5 +1,5 @@
 import React, { createContext, useEffect, useRef, useState } from "react";
-import Icon from "@mdi/react";
+import { Icon } from "@mdi/react";
 import { mdiClose } from "@mdi/js";
 import "./styles.sass";
 

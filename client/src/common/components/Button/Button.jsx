@@ -1,5 +1,5 @@
 import "./styles.sass";
-import Icon from "@mdi/react";
+import { Icon } from "@mdi/react";
 
 export const Button = ({onClick, text, icon, disabled, type, buttonType}) => {
     return (

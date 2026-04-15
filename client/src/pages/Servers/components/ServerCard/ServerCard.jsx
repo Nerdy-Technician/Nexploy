@@ -1,5 +1,5 @@
 import "./styles.sass";
-import Icon from "@mdi/react";
+import { Icon } from "@mdi/react";
 import { mdiDotsVertical, mdiServerOutline, mdiMemory, mdiHarddisk, mdiChip } from "@mdi/js";
 import ProgressRing from "../ProgressRing";
 

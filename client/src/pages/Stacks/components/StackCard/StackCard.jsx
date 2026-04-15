@@ -1,5 +1,5 @@
 import "./styles.sass";
-import Icon from "@mdi/react";
+import { Icon } from "@mdi/react";
 import { mdiDotsVertical, mdiCog, mdiPlay, mdiStop, mdiRestart, mdiCloseOctagon, mdiDelete, mdiPencil } from "@mdi/js";
 import { ContextMenu, ContextMenuItem } from "@/common/components/ContextMenu";
 import { useState } from "react";

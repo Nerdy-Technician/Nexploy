@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from "react";
-import Icon from "@mdi/react";
+import { Icon } from "@mdi/react";
 import { mdiChevronRight } from "@mdi/js";
 
 export const ContextMenuItem = ({

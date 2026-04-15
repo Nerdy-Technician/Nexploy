@@ -1,5 +1,5 @@
 import { useMemo } from "react";
-import Icon from "@mdi/react";
+import { Icon } from "@mdi/react";
 import { mdiChevronLeft, mdiChevronRight, mdiInformationOutline } from "@mdi/js";
 import Button from "@/common/components/Button";
 import "./styles.sass";

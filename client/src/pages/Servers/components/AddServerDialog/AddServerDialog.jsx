@@ -7,7 +7,7 @@ import WizardSteps from "@/common/components/WizardSteps";
 import SelectBox from "@/common/components/SelectBox";
 import { useToast } from "@/common/contexts/ToastContext.jsx";
 import { getRequest, postRequest } from "@/common/utils/RequestUtil.js";
-import Icon from "@mdi/react";
+import { Icon } from "@mdi/react";
 import { 
     mdiServer, 
     mdiMapMarker, 

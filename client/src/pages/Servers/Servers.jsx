@@ -1,5 +1,5 @@
 import "./styles.sass";
-import Icon from "@mdi/react";
+import { Icon } from "@mdi/react";
 import { mdiPlus, mdiServerOutline } from "@mdi/js";
 import AllServers from "./pages/AllServers";
 import { useState } from "react";

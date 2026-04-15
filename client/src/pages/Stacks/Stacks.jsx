@@ -1,5 +1,5 @@
 import "./styles.sass";
-import Icon from "@mdi/react";
+import { Icon } from "@mdi/react";
 import { mdiLayers, mdiPlus } from "@mdi/js";
 import { Navigate, Route, Routes, useLocation, useNavigate } from "react-router-dom";
 import AllStacks from "./pages/AllStacks";

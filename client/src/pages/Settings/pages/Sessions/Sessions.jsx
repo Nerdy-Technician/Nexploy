@@ -3,7 +3,7 @@ import { useContext, useEffect, useState } from "react";
 import { UserContext } from "@/common/contexts/UserContext.jsx";
 import { deleteRequest, getRequest } from "@/common/utils/RequestUtil.js";
 import { UAParser } from "ua-parser-js";
-import Icon from "@mdi/react";
+import { Icon } from "@mdi/react";
 import { mdiCellphone, mdiMonitor, mdiTablet } from "@mdi/js";
 import Button from "@/common/components/Button";
 

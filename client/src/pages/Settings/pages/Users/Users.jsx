@@ -4,7 +4,7 @@ import { UserContext } from "@/common/contexts/UserContext.jsx";
 import { getRequest, deleteRequest, patchRequest, postRequest } from "@/common/utils/RequestUtil.js";
 import Button from "@/common/components/Button";
 import PaginatedTable from "@/common/components/PaginatedTable";
-import Icon from "@mdi/react";
+import { Icon } from "@mdi/react";
 import {
     mdiAccount,
     mdiDotsVertical,

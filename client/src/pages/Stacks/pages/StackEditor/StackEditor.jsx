@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback, useRef } from "react";
 import { getRequest, postRequest, putRequest } from "@/common/utils/RequestUtil.js";
 import { useToast } from "@/common/contexts/ToastContext.jsx";
 import Editor from "@monaco-editor/react";
-import Icon from "@mdi/react";
+import { Icon } from "@mdi/react";
 import TabSwitcher from "@/common/components/TabSwitcher";
 import LogViewer from "@/common/components/LogViewer";
 import SelectBox from "@/common/components/SelectBox";
@@ -31,6 +31,7 @@ import {
 } from "@mdi/js";
 import Button from "@/common/components/Button";
 import IconInput from "@/common/components/IconInput";
+import { ComposerizeDialog } from "../../components/ComposerizeDialog";
 
 const DEFAULT_COMPOSE = `services:
   app:
@@ -67,6 +68,7 @@ export const StackEditor = () => {
     const [originalEnvVars, setOriginalEnvVars] = useState([]);
     const [envLoading, setEnvLoading] = useState(false);
     const [envHasChanges, setEnvHasChanges] = useState(false);
+    const [composerizeOpen, setComposerizeOpen] = useState(false);
 
     const isNew = id === "new";
 
@@ -395,6 +397,15 @@ export const StackEditor = () => {
 
                         <div className="tab-content">
                             {activeTab === 'compose' && (
+                                <>
+                                <div className="compose-toolbar">
+                                    <Button
+                                        text="Import from docker run"
+                                        icon={mdiDocker}
+                                        type="secondary"
+                                        onClick={() => setComposerizeOpen(true)}
+                                    />
+                                </div>
                                 <div className="monaco-wrapper">
                                     <Editor
                                         height="100%"
@@ -417,6 +428,7 @@ export const StackEditor = () => {
                                         }}
                                     />
                                 </div>
+                                </>
                             )}
 
                             {activeTab === 'logs' && !isNew && (
@@ -644,6 +656,14 @@ export const StackEditor = () => {
                     )}
                 </div>
             </div>
+            <ComposerizeDialog
+                open={composerizeOpen}
+                onClose={() => setComposerizeOpen(false)}
+                onConvert={(yaml) => {
+                    setComposeContent(yaml);
+                    if (!isNew) setHasChanges(yaml !== originalContent);
+                }}
+            />
         </div>
     );
 };

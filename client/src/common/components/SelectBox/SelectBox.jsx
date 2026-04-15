@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useRef } from "react";
 import { createPortal } from "react-dom";
 import "./styles.sass";
-import Icon from "@mdi/react";
+import { Icon } from "@mdi/react";
 import { mdiChevronDown, mdiMagnify } from "@mdi/js";
 
 export const SelectBox = ({ options, selected, setSelected, id, disabled = false, searchable = false }) => {

@@ -1,5 +1,5 @@
 import "./styles.sass";
-import Icon from "@mdi/react";
+import { Icon } from "@mdi/react";
 import { useLocation, useNavigate } from "react-router-dom";
 
 export const SettingsItem = ({icon, title, routeKey}) => {

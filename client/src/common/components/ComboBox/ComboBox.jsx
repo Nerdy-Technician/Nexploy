@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { createPortal } from "react-dom";
 import "./styles.sass";
-import Icon from "@mdi/react";
+import { Icon } from "@mdi/react";
 import { mdiChevronDown } from "@mdi/js";
 
 export const ComboBox = ({ icon, id, placeholder, value, setValue, options = [], onFocus, onBlur, disabled = false }) => {

@@ -1,6 +1,6 @@
 import { createContext, useContext, useState, useCallback } from "react";
 import "@/common/styles/toast.sass";
-import Icon from "@mdi/react";
+import { Icon } from "@mdi/react";
 import { mdiAlert, mdiAlertCircle, mdiCheckCircle, mdiClose, mdiInformation } from "@mdi/js";
 
 const ToastContext = createContext({});

@@ -1,5 +1,5 @@
 import "./styles.sass";
-import Icon from "@mdi/react";
+import { Icon } from "@mdi/react";
 import { useEffect, useRef, useState } from "react";
 
 export const TabSwitcher = ({ tabs, activeTab, onTabChange, variant = "default", iconOnly = false }) => {

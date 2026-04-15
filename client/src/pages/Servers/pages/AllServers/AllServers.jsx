@@ -1,7 +1,7 @@
 import "./styles.sass";
 import { getRequest, postRequest, deleteRequest } from "@/common/utils/RequestUtil.js";
 import ServerCard from "../../components/ServerCard";
-import Icon from "@mdi/react";
+import { Icon } from "@mdi/react";
 import { mdiLoading, mdiDelete, mdiRefresh, mdiConnection, mdiMapMarker } from "@mdi/js";
 import { useState, useEffect, useCallback, useMemo } from "react";
 import { useToast } from "@/common/contexts/ToastContext.jsx";

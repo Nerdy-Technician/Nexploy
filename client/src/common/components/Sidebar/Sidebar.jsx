@@ -8,7 +8,7 @@ import {
     mdiDocker,
     mdiAccountCogOutline,
 } from "@mdi/js";
-import Icon from "@mdi/react";
+import { Icon } from "@mdi/react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { useContext, useState, useRef, useEffect } from "react";
 import { UserContext } from "@/common/contexts/UserContext.jsx";

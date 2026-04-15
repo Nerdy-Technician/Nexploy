@@ -1,6 +1,6 @@
 import { createPortal } from "react-dom";
 import { useContext, useState, useEffect, useCallback, useMemo } from "react";
-import Icon from "@mdi/react";
+import { Icon } from "@mdi/react";
 import { mdiClose, mdiLogout, mdiAccountCircleOutline, mdiAccountGroup, mdiClockStarFourPointsOutline } from "@mdi/js";
 import { UserContext } from "@/common/contexts/UserContext.jsx";
 import { ActionConfirmDialog } from "@/common/components/ActionConfirmDialog/ActionConfirmDialog.jsx";

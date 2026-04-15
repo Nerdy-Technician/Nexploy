@@ -1,6 +1,6 @@
 import { useEffect, useRef, useMemo } from "react";
 import { parseLogLines } from "@/common/utils/ansiParser.js";
-import Icon from "@mdi/react";
+import { Icon } from "@mdi/react";
 import { mdiRefresh } from "@mdi/js";
 import "./styles.sass";
 
