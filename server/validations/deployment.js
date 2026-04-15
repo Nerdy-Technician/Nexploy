@@ -11,6 +11,7 @@ module.exports.deploymentCreateValidation = Joi.object({
     autoBuild: Joi.boolean().default(false),
     autoBuildInterval: Joi.number().integer().min(60).max(86400).default(300),
     gitCredentialId: Joi.number().integer().positive().allow(null),
+    port: Joi.number().integer().min(1).max(65535).allow(null),
 });
 
 module.exports.deploymentUpdateValidation = Joi.object({
@@ -21,4 +22,5 @@ module.exports.deploymentUpdateValidation = Joi.object({
     autoBuild: Joi.boolean(),
     autoBuildInterval: Joi.number().integer().min(60).max(86400),
     gitCredentialId: Joi.number().integer().positive().allow(null),
+    port: Joi.number().integer().min(1).max(65535).allow(null),
 }).min(1);

@@ -80,4 +80,8 @@ module.exports = db.define("deployments", {
         type: Sequelize.INTEGER,
         allowNull: true,
     },
+    port: {
+        type: Sequelize.INTEGER,
+        allowNull: true,
+    },
 }, { freezeTableName: true });

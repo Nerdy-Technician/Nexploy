@@ -91,6 +91,10 @@ module.exports = {
                     type: Sequelize.INTEGER,
                     allowNull: true,
                 },
+                port: {
+                    type: DataTypes.INTEGER,
+                    allowNull: true,
+                }
                 createdAt: {
                     type: DataTypes.DATE,
                     allowNull: false,

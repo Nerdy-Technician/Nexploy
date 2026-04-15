@@ -8,6 +8,14 @@ const logger = require("../utils/logger");
 
 const escapeShellArg = (arg) => `'${arg.replace(/'/g, "'\\''")}'`;
 
+const generateCompose = (name, imageName, port) => {
+    let compose = `services:\n  ${name}:\n    image: ${imageName}:latest\n    restart: unless-stopped\n`;
+    if (port) {
+        compose += `    ports:\n      - "${port}:${port}"\n`;
+    }
+    return compose;
+};
+
 module.exports.listDeployments = async (serverId = null) => {
     const where = {};
     if (serverId) where.serverId = serverId;
@@ -28,7 +36,7 @@ const getSessionForDeployment = async (deployment) => {
 };
 
 module.exports.createDeployment = async (data) => {
-    const { serverId, name, repoUrl, branch, dockerfilePath, buildContext, composeContent, autoBuild, autoBuildInterval } = data;
+    const { serverId, name, repoUrl, branch, dockerfilePath, buildContext, composeContent, autoBuild, autoBuildInterval, port } = data;
 
     const server = await Server.findByPk(serverId);
     if (!server || server.status !== "active") return { code: 602, message: "Server not available" };
@@ -38,11 +46,7 @@ module.exports.createDeployment = async (data) => {
 
     const imageName = `nexploy-deploy-${name}`.toLowerCase().replace(/[^a-z0-9_-]/g, "-");
 
-    const defaultCompose = composeContent || `services:
-  ${name}:
-    image: ${imageName}:latest
-    restart: unless-stopped
-`;
+    const defaultCompose = composeContent || generateCompose(name, imageName, port);
 
     const deployment = await Deployment.create({
         serverId,
@@ -55,6 +59,7 @@ module.exports.createDeployment = async (data) => {
         composeContent: defaultCompose,
         autoBuild: autoBuild || false,
         autoBuildInterval: autoBuildInterval || 300,
+        port: port || null,
         status: "pending",
     });
 
@@ -66,10 +71,14 @@ module.exports.updateDeployment = async (id, data) => {
     const deployment = await Deployment.findByPk(id);
     if (!deployment) return { code: 601, message: "Deployment not found" };
 
-    const allowed = ["branch", "dockerfilePath", "buildContext", "composeContent", "autoBuild", "autoBuildInterval", "gitCredentialId"];
+    const allowed = ["branch", "dockerfilePath", "buildContext", "composeContent", "autoBuild", "autoBuildInterval", "gitCredentialId", "port"];
     const updates = {};
     for (const key of allowed) {
         if (data[key] !== undefined) updates[key] = data[key];
+    }
+
+    if (data.port !== undefined && data.composeContent === undefined) {
+        updates.composeContent = generateCompose(deployment.name, deployment.imageName, data.port);
     }
 
     await Deployment.update(updates, { where: { id } });
