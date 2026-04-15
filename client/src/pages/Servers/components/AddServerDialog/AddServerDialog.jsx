@@ -1,9 +1,9 @@
 import { useState, useEffect } from "react";
 import { DialogProvider } from "@/common/components/Dialog/Dialog.jsx";
-import { IconInput } from "@/common/components/IconInput/IconInput.jsx";
-import { ComboBox } from "@/common/components/ComboBox/ComboBox.jsx";
-import { Button } from "@/common/components/Button/Button.jsx";
-import { WizardSteps } from "@/common/components/WizardSteps/WizardSteps.jsx";
+import IconInput from "@/common/components/IconInput";
+import ComboBox from "@/common/components/ComboBox";
+import Button from "@/common/components/Button";
+import WizardSteps from "@/common/components/WizardSteps";
 import SelectBox from "@/common/components/SelectBox";
 import { useToast } from "@/common/contexts/ToastContext.jsx";
 import { getRequest, postRequest } from "@/common/utils/RequestUtil.js";
