@@ -360,6 +360,14 @@ export const StackEditor = () => {
                     </div>
                 </div>
                 <div className="header-actions">
+                    {activeTab === 'compose' && (
+                        <Button
+                            text="Import docker run"
+                            icon={mdiDocker}
+                            type="secondary"
+                            onClick={() => setComposerizeOpen(true)}
+                        />
+                    )}
                     {isNew ? (
                         <Button
                             text={creating ? "Creating..." : "Deploy Stack"}
@@ -397,15 +405,6 @@ export const StackEditor = () => {
 
                         <div className="tab-content">
                             {activeTab === 'compose' && (
-                                <>
-                                <div className="compose-toolbar">
-                                    <Button
-                                        text="Import from docker run"
-                                        icon={mdiDocker}
-                                        type="secondary"
-                                        onClick={() => setComposerizeOpen(true)}
-                                    />
-                                </div>
                                 <div className="monaco-wrapper">
                                     <Editor
                                         height="100%"
@@ -428,7 +427,6 @@ export const StackEditor = () => {
                                         }}
                                     />
                                 </div>
-                                </>
                             )}
 
                             {activeTab === 'logs' && !isNew && (
