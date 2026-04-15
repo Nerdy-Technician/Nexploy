@@ -24,7 +24,10 @@ import {
     mdiRocket,
     mdiPackageVariantClosed,
     mdiDocker,
-    mdiOpenInNew
+    mdiOpenInNew,
+    mdiPlus,
+    mdiDelete,
+    mdiApplicationVariableOutline
 } from "@mdi/js";
 import Button from "@/common/components/Button";
 import IconInput from "@/common/components/IconInput";
@@ -60,6 +63,10 @@ export const StackEditor = () => {
     const [creating, setCreating] = useState(false);
     const [containers, setContainers] = useState([]);
     const [containersLoading, setContainersLoading] = useState(false);
+    const [envVars, setEnvVars] = useState([]);
+    const [originalEnvVars, setOriginalEnvVars] = useState([]);
+    const [envLoading, setEnvLoading] = useState(false);
+    const [envHasChanges, setEnvHasChanges] = useState(false);
 
     const isNew = id === "new";
 
@@ -122,6 +129,24 @@ export const StackEditor = () => {
         }
     }, [id, isNew, sendToast]);
 
+    const fetchEnv = useCallback(async () => {
+        if (isNew) return;
+        setEnvLoading(true);
+        try {
+            const data = await getRequest(`stacks/${id}/env`);
+            if (!data?.code) {
+                const vars = data.variables || [];
+                setEnvVars(vars);
+                setOriginalEnvVars(JSON.stringify(vars));
+                setEnvHasChanges(false);
+            }
+        } catch {
+            sendToast("Error", "Failed to load environment variables");
+        } finally {
+            setEnvLoading(false);
+        }
+    }, [id, isNew, sendToast]);
+
     useEffect(() => {
         if (isNew) {
             setComposeContent(DEFAULT_COMPOSE);
@@ -146,7 +171,10 @@ export const StackEditor = () => {
         if (activeTab === "containers" && !isNew) {
             fetchContainers();
         }
-    }, [activeTab, isNew, fetchLogs, fetchContainers]);
+        if (activeTab === "environment" && !isNew) {
+            fetchEnv();
+        }
+    }, [activeTab, isNew, fetchLogs, fetchContainers, fetchEnv]);
 
     useEffect(() => {
         if (!liveMode || activeTab !== "logs" || isNew) return;
@@ -184,6 +212,8 @@ export const StackEditor = () => {
         }
     }, [activeTab, liveMode]);
 
+    const anyChanges = hasChanges || envHasChanges;
+
     const handleEditorChange = (value) => {
         setComposeContent(value || "");
         if (!isNew) {
@@ -196,14 +226,40 @@ export const StackEditor = () => {
     };
 
     const handleSave = async () => {
+        const invalid = envVars.some(v => v.key && !/^[a-zA-Z_][a-zA-Z0-9_]*$/.test(v.key));
+        if (invalid) {
+            sendToast("Error", "Variable names must start with a letter or underscore and contain only alphanumeric characters");
+            return;
+        }
+
         setSaving(true);
         try {
-            await putRequest(`stacks/${id}/compose`, { content: composeContent });
-            setOriginalContent(composeContent);
-            setHasChanges(false);
-            sendToast("Success", "Compose file saved");
+            const promises = [];
+
+            if (hasChanges) {
+                promises.push(
+                    putRequest(`stacks/${id}/compose`, { content: composeContent }).then(() => {
+                        setOriginalContent(composeContent);
+                        setHasChanges(false);
+                    })
+                );
+            }
+
+            if (envHasChanges) {
+                const filtered = envVars.filter(v => v.key.trim());
+                promises.push(
+                    putRequest(`stacks/${id}/env`, { variables: filtered }).then(() => {
+                        setEnvVars(filtered);
+                        setOriginalEnvVars(JSON.stringify(filtered));
+                        setEnvHasChanges(false);
+                    })
+                );
+            }
+
+            await Promise.all(promises);
+            sendToast("Success", "Changes saved");
         } catch (err) {
-            sendToast("Error", err.message || "Failed to save compose file");
+            sendToast("Error", err.message || "Failed to save changes");
         } finally {
             setSaving(false);
         }
@@ -249,6 +305,31 @@ export const StackEditor = () => {
         }
     };
 
+    const updateEnvVar = (index, field, value) => {
+        setEnvVars(prev => {
+            const updated = [...prev];
+            updated[index] = { ...updated[index], [field]: value };
+            setEnvHasChanges(JSON.stringify(updated) !== originalEnvVars);
+            return updated;
+        });
+    };
+
+    const addEnvVar = () => {
+        setEnvVars(prev => {
+            const updated = [...prev, { key: "", value: "" }];
+            setEnvHasChanges(JSON.stringify(updated) !== originalEnvVars);
+            return updated;
+        });
+    };
+
+    const removeEnvVar = (index) => {
+        setEnvVars(prev => {
+            const updated = prev.filter((_, i) => i !== index);
+            setEnvHasChanges(JSON.stringify(updated) !== originalEnvVars);
+            return updated;
+        });
+    };
+
     const formatDate = (dateString) => {
         if (!dateString) return "-";
         return new Date(dateString).toLocaleString();
@@ -289,7 +370,7 @@ export const StackEditor = () => {
                             text={saving ? "Saving..." : "Save Changes"}
                             icon={saving ? mdiLoading : mdiContentSave}
                             onClick={handleSave}
-                            disabled={!hasChanges || saving}
+                            disabled={!anyChanges || saving}
                         />
                     )}
                 </div>
@@ -302,6 +383,7 @@ export const StackEditor = () => {
                             <TabSwitcher
                                 tabs={[
                                     { key: "compose", label: "Compose File", icon: mdiFileDocumentOutline },
+                                    { key: "environment", label: "Environment", icon: mdiApplicationVariableOutline },
                                     { key: "containers", label: "Containers", icon: mdiPackageVariantClosed },
                                     { key: "logs", label: "Logs", icon: mdiTextBox }
                                 ]}
@@ -389,6 +471,73 @@ export const StackEditor = () => {
                                             <h3>No containers</h3>
                                             <p>Start the stack to create containers</p>
                                         </div>
+                                    )}
+                                </div>
+                            )}
+
+                            {activeTab === 'environment' && !isNew && (
+                                <div className="stack-environment">
+                                    {envLoading ? (
+                                        <div className="stack-env-loading">
+                                            <Icon path={mdiLoading} spin={true} size={1.5} />
+                                        </div>
+                                    ) : (
+                                        <>
+                                            {envVars.length > 0 ? (
+                                                <div className="env-list">
+                                                    <div className="env-header-row">
+                                                        <span className="env-col-key">Variable Name</span>
+                                                        <span className="env-col-value">Value</span>
+                                                        <span className="env-col-actions"></span>
+                                                    </div>
+                                                    {envVars.map((v, i) => (
+                                                        <div key={i} className="env-row">
+                                                            <input
+                                                                className="env-input env-key"
+                                                                type="text"
+                                                                placeholder="VARIABLE_NAME"
+                                                                value={v.key}
+                                                                onChange={(e) => updateEnvVar(i, "key", e.target.value)}
+                                                                spellCheck={false}
+                                                            />
+                                                            <input
+                                                                className="env-input env-value"
+                                                                type="text"
+                                                                placeholder="value"
+                                                                value={v.value}
+                                                                onChange={(e) => updateEnvVar(i, "value", e.target.value)}
+                                                                spellCheck={false}
+                                                            />
+                                                            <button
+                                                                className="env-remove-btn"
+                                                                onClick={() => removeEnvVar(i)}
+                                                                title="Remove variable"
+                                                            >
+                                                                <Icon path={mdiDelete} />
+                                                            </button>
+                                                        </div>
+                                                    ))}
+                                                    <Button
+                                                        text="Add Variable"
+                                                        icon={mdiPlus}
+                                                        type="secondary"
+                                                        onClick={addEnvVar}
+                                                    />
+                                                </div>
+                                            ) : (
+                                                <div className="env-empty">
+                                                    <Icon path={mdiApplicationVariableOutline} size={2} />
+                                                    <h3>No environment variables</h3>
+                                                    <p>Add variables that will be available to your Docker Compose services via a .env file</p>
+                                                    <Button
+                                                        text="Add Variable"
+                                                        icon={mdiPlus}
+                                                        type="secondary"
+                                                        onClick={addEnvVar}
+                                                    />
+                                                </div>
+                                            )}
+                                        </>
                                     )}
                                 </div>
                             )}

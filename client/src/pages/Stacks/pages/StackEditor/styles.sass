@@ -351,6 +351,137 @@
               color: colors.$gray
               font-size: 0.85rem
 
+        .stack-environment
+          height: 100%
+          overflow-y: auto
+          padding: 1rem
+          display: flex
+          flex-direction: column
+          gap: 1rem
+
+          .stack-env-loading
+            display: flex
+            align-items: center
+            justify-content: center
+            padding: 3rem
+            flex: 1
+
+            svg
+              color: colors.$primary
+
+          .env-list
+            display: flex
+            flex-direction: column
+            gap: 0.25rem
+
+            .env-header-row
+              display: flex
+              align-items: center
+              gap: 0.5rem
+              padding: 0.5rem 0.75rem
+              padding-right: 3rem
+
+              .env-col-key, .env-col-value
+                font-size: 0.7rem
+                font-weight: 700
+                color: colors.$subtext
+                text-transform: uppercase
+                letter-spacing: 0.5px
+
+              .env-col-key
+                flex: 1
+                max-width: 280px
+
+              .env-col-value
+                flex: 2
+
+              .env-col-actions
+                width: 2.25rem
+                flex-shrink: 0
+
+            .env-row
+              display: flex
+              align-items: center
+              gap: 0.5rem
+              padding: 0.25rem 0
+
+              .env-input
+                padding: 0.625rem 0.875rem
+                background-color: colors.$background
+                border: 1px solid colors.$dark-gray
+                border-radius: 0.375rem
+                color: colors.$white
+                font-size: 0.875rem
+                font-family: "JetBrains Mono", "Fira Code", monospace
+                outline: none
+                transition: border-color 0.2s
+
+                &::placeholder
+                  color: colors.$gray
+
+                &:focus
+                  border-color: colors.$primary
+
+                &.env-key
+                  flex: 1
+                  max-width: 280px
+
+                &.env-value
+                  flex: 2
+
+              .env-remove-btn
+                width: 2.25rem
+                height: 2.25rem
+                display: flex
+                align-items: center
+                justify-content: center
+                background: transparent
+                border: 1px solid transparent
+                border-radius: 0.375rem
+                cursor: pointer
+                transition: all 0.2s
+                flex-shrink: 0
+
+                svg
+                  width: 1.125rem
+                  height: 1.125rem
+                  color: colors.$subtext
+
+                &:hover
+                  background-color: colors.$error-opacity
+                  border-color: colors.$error
+
+                  svg
+                    color: colors.$error
+
+            .btn
+              margin-top: 0.5rem
+
+          .env-empty
+            display: flex
+            flex-direction: column
+            align-items: center
+            justify-content: center
+            padding: 4rem 2rem
+            gap: 0.5rem
+            flex: 1
+
+            svg
+              color: colors.$gray
+
+            h3
+              margin: 0
+              color: colors.$subtext
+              font-size: 1rem
+              font-weight: 600
+
+            p
+              margin: 0
+              color: colors.$gray
+              font-size: 0.85rem
+              text-align: center
+              max-width: 360px
+
     .editor-sidebar
       width: 320px
       flex-shrink: 0

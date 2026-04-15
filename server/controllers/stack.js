@@ -39,7 +39,13 @@ module.exports.stackAction = async (id, action) => {
     const { session, error } = await getSessionForStack(stack);
     if (error) return error;
 
-    const composeCmd = `cd ${escapeShellArg(stack.directory)} && docker compose -f ${escapeShellArg(stack.configFile)}`;
+    let envFlag = "";
+    try {
+        const envCheck = await session.exec(`test -f ${escapeShellArg(stack.directory + '/.env')} && echo yes`, { stream: false });
+        if (envCheck.stdout?.trim() === "yes") envFlag = " --env-file .env";
+    } catch {}
+
+    const composeCmd = `cd ${escapeShellArg(stack.directory)} && docker compose -f ${escapeShellArg(stack.configFile)}${envFlag}`;
     const actionMap = {
         start: `${composeCmd} up -d --remove-orphans`,
         stop: `${composeCmd} stop`,
@@ -239,6 +245,71 @@ module.exports.getStackLogs = async (id, tail = 100, timestamps = false) => {
         return { logs: result.stdout };
     } catch (err) {
         return { code: 504, message: `Failed to get logs: ${err.message}` };
+    }
+};
+
+module.exports.getStackEnv = async (id) => {
+    const stack = await Stack.findByPk(id);
+    if (!stack) return { code: 501, message: "Stack not found" };
+
+    const { session, error } = await getSessionForStack(stack);
+    if (error) return error;
+
+    try {
+        const envPath = `${stack.directory}/.env`;
+        const result = await session.exec(`cat ${escapeShellArg(envPath)} 2>/dev/null || true`, { stream: false });
+        const content = result.stdout || "";
+
+        const variables = [];
+        for (const line of content.split("\n")) {
+            const trimmed = line.trim();
+            if (!trimmed || trimmed.startsWith("#")) continue;
+            const eqIndex = trimmed.indexOf("=");
+            if (eqIndex === -1) continue;
+            variables.push({
+                key: trimmed.substring(0, eqIndex),
+                value: trimmed.substring(eqIndex + 1),
+            });
+        }
+
+        return { variables };
+    } catch (err) {
+        return { code: 504, message: `Failed to read env file: ${err.message}` };
+    }
+};
+
+module.exports.updateStackEnv = async (id, variables) => {
+    const stack = await Stack.findByPk(id);
+    if (!stack) return { code: 501, message: "Stack not found" };
+
+    const { session, error } = await getSessionForStack(stack);
+    if (error) return error;
+
+    try {
+        const envPath = `${stack.directory}/.env`;
+
+        if (!Array.isArray(variables) || variables.length === 0) {
+            await session.exec(`rm -f ${escapeShellArg(envPath)}`, { stream: false });
+            logger.info("Stack env file removed", { stackId: id, name: stack.name });
+            return { message: "Environment variables cleared" };
+        }
+
+        const envContent = variables
+            .filter(v => v.key && typeof v.key === "string")
+            .map(v => `${v.key}=${v.value ?? ""}`)
+            .join("\n") + "\n";
+
+        const escaped = envContent.replace(/'/g, "'\\''");
+        const result = await session.exec(
+            `cat > ${escapeShellArg(envPath)} << 'NEXPLOY_EOF'\n${escaped}\nNEXPLOY_EOF`,
+            { stream: false }
+        );
+        if (result.code !== 0) throw new Error(result.stderr || "Failed to write file");
+
+        logger.info("Stack env file updated", { stackId: id, name: stack.name, count: variables.length });
+        return { message: "Environment variables updated" };
+    } catch (err) {
+        return { code: 504, message: `Failed to update env file: ${err.message}` };
     }
 };
 

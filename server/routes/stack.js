@@ -1,6 +1,6 @@
 const { Hono } = require("hono");
-const { stackActionValidation, stackComposeValidation, stackCreateValidation } = require("../validations/stack");
-const { listStacks, getStack, refreshStacks, stackAction, getStackCompose, updateStackCompose, createStack, deleteStack, getStackLogs, getStackContainers } = require("../controllers/stack");
+const { stackActionValidation, stackComposeValidation, stackCreateValidation, stackEnvValidation } = require("../validations/stack");
+const { listStacks, getStack, refreshStacks, stackAction, getStackCompose, updateStackCompose, createStack, deleteStack, getStackLogs, getStackContainers, getStackEnv, updateStackEnv } = require("../controllers/stack");
 const { authenticate } = require("../middlewares/auth");
 const { validateSchema } = require("../utils/schema");
 const { upgradeWebSocket } = require("../utils/websocket");
@@ -79,6 +79,24 @@ app.delete("/:id", authenticate, async (c) => {
 app.get("/:id/containers", authenticate, async (c) => {
     const id = parseInt(c.req.param("id"), 10);
     const result = await getStackContainers(id);
+    if (result?.code) return c.json(result, result.code === 501 ? 404 : 400);
+    return c.json(result);
+});
+
+app.get("/:id/env", authenticate, async (c) => {
+    const id = parseInt(c.req.param("id"), 10);
+    const result = await getStackEnv(id);
+    if (result?.code) return c.json(result, result.code === 501 ? 404 : 400);
+    return c.json(result);
+});
+
+app.put("/:id/env", authenticate, async (c) => {
+    const id = parseInt(c.req.param("id"), 10);
+    const body = await c.req.json();
+    const error = validateSchema(stackEnvValidation, body);
+    if (error) return c.json({ message: error }, 400);
+
+    const result = await updateStackEnv(id, body.variables);
     if (result?.code) return c.json(result, result.code === 501 ? 404 : 400);
     return c.json(result);
 });

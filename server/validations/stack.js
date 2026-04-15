@@ -13,3 +13,12 @@ module.exports.stackCreateValidation = Joi.object({
     name: Joi.string().min(1).max(100).pattern(/^[a-zA-Z0-9_-]+$/).required(),
     composeContent: Joi.string().min(1).max(1048576).required(),
 });
+
+module.exports.stackEnvValidation = Joi.object({
+    variables: Joi.array().items(
+        Joi.object({
+            key: Joi.string().min(1).max(512).pattern(/^[a-zA-Z_][a-zA-Z0-9_]*$/).required(),
+            value: Joi.string().allow("").max(8192).required(),
+        })
+    ).max(500).required(),
+});
