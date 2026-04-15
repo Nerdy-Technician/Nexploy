@@ -8,6 +8,7 @@ import "@/common/styles/main.sass";
 import { lazy } from "react";
 import Root from "@/common/layouts/Root.jsx";
 import Stacks from "@/pages/Stacks";
+import Deployments from "@/pages/Deployments";
 import Apps from "@/pages/Apps";
 
 const Servers = lazy(() => import("@/pages/Servers"));
@@ -25,6 +26,7 @@ const App = () => {
                 { path: "/containers/*", element: <Containers/> },
                 { path: "/images", element: <Images/> },
                 { path: "/stacks/*", element: <Stacks/> },
+                { path: "/deployments/*", element: <Deployments/> },
                 { path: "/apps/*", element: <Apps/> },
             ],
         },

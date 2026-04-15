@@ -8,6 +8,7 @@ import {
     mdiDocker,
     mdiCubeOutline,
     mdiAccountCogOutline,
+    mdiRocketLaunchOutline,
 } from "@mdi/js";
 import { Icon } from "@mdi/react";
 import { useLocation, useNavigate } from "react-router-dom";
@@ -37,6 +38,7 @@ export const Sidebar = () => {
         { title: "Containers", path: "/containers", icon: mdiDocker },
         { title: "Images", path: "/images", icon: mdiCubeOutline },
         { title: "Stacks", path: "/stacks", icon: mdiLayers },
+        { title: "Deployments", path: "/deployments", icon: mdiRocketLaunchOutline },
         { title: "Apps", path: "/apps", icon: mdiPackageVariant }
     ];
 
