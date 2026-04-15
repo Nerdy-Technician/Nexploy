@@ -1,6 +1,9 @@
 const { Hono } = require("hono");
 const { authenticate } = require("../middlewares/auth");
 const { listApps, getApp, getAppLogo, getAppGalleryImage } = require("../controllers/source");
+const { installApp, updateApp, uninstallApp, listInstalledApps } = require("../controllers/appInstall");
+const { appInstallValidation } = require("../validations/appInstall");
+const { validateSchema } = require("../utils/schema");
 const path = require("path");
 
 const app = new Hono();
@@ -54,12 +57,64 @@ app.get("/", authenticate, async (c) => {
     }
 });
 
+app.get("/installed", authenticate, async (c) => {
+    try {
+        const result = await listInstalledApps();
+        return c.json(result);
+    } catch (err) {
+        return c.json({ code: 500, message: err.message }, 500);
+    }
+});
+
+app.post("/installed/:id/update", authenticate, async (c) => {
+    try {
+        const id = parseInt(c.req.param("id"), 10);
+        const result = await updateApp(id);
+        if (result?.code) {
+            const status = result.code === 404 ? 404 : result.code === 400 ? 400 : 500;
+            return c.json(result, status);
+        }
+        return c.json(result);
+    } catch (err) {
+        return c.json({ code: 500, message: err.message }, 500);
+    }
+});
+
+app.delete("/installed/:id", authenticate, async (c) => {
+    try {
+        const id = parseInt(c.req.param("id"), 10);
+        const result = await uninstallApp(id);
+        if (result?.code) return c.json(result, result.code === 404 ? 404 : 500);
+        return c.json(result);
+    } catch (err) {
+        return c.json({ code: 500, message: err.message }, 500);
+    }
+});
+
 app.get("/:source/:slug", authenticate, async (c) => {
     try {
         const { source, slug } = c.req.param();
         const appData = await getApp(source, slug);
         if (!appData) return c.json({ code: 404, message: "App not found" }, 404);
         return c.json(appData);
+    } catch (err) {
+        return c.json({ code: 500, message: err.message }, 500);
+    }
+});
+
+app.post("/:source/:slug/install", authenticate, async (c) => {
+    try {
+        const { source, slug } = c.req.param();
+        const body = await c.req.json();
+        const error = validateSchema(appInstallValidation, body);
+        if (error) return c.json({ message: error }, 400);
+
+        const result = await installApp(source, slug, body.serverId);
+        if (result?.code) {
+            const status = result.code === 404 ? 404 : result.code === 505 ? 409 : 500;
+            return c.json(result, status);
+        }
+        return c.json(result, 201);
     } catch (err) {
         return c.json({ code: 500, message: err.message }, 500);
     }

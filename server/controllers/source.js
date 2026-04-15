@@ -119,10 +119,17 @@ const syncSource = async (name) => {
             const firstLetter = app.slug.charAt(0).toLowerCase();
             const appDir = path.join(sourceDir, firstLetter, app.slug);
 
-            const versionFile = path.join(appDir, ".version");
-            if (fs.existsSync(versionFile)) {
-                const existingVersion = fs.readFileSync(versionFile, "utf-8").trim();
-                if (existingVersion === app.version) continue;
+            const manifestPath = path.join(appDir, "manifest.yml");
+            const altManifestPath = path.join(appDir, "manifest.yaml");
+            const existingManifestPath = fs.existsSync(manifestPath) ? manifestPath
+                : fs.existsSync(altManifestPath) ? altManifestPath
+                : null;
+
+            if (existingManifestPath) {
+                try {
+                    const existing = yaml.parse(fs.readFileSync(existingManifestPath, "utf-8"));
+                    if (existing.version === app.version) continue;
+                } catch {}
             }
 
             fs.mkdirSync(appDir, { recursive: true });
@@ -158,11 +165,8 @@ const syncSource = async (name) => {
                     if (data) fs.writeFileSync(path.join(galleryDir, filename), Buffer.from(data));
                 }
             }
-
-            fs.writeFileSync(versionFile, app.version);
         }
 
-        // Remove apps no longer in the index
         if (fs.existsSync(sourceDir)) {
             for (const letter of fs.readdirSync(sourceDir)) {
                 const letterDir = path.join(sourceDir, letter);
