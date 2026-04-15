@@ -1,8 +1,9 @@
 import "./styles.sass";
-import { useContext, useEffect, useState } from "react";
+import { useCallback, useContext, useEffect, useMemo, useState } from "react";
 import { UserContext } from "@/common/contexts/UserContext.jsx";
 import { getRequest, deleteRequest, patchRequest, postRequest } from "@/common/utils/RequestUtil.js";
 import Button from "@/common/components/Button";
+import PaginatedTable from "@/common/components/PaginatedTable";
 import Icon from "@mdi/react";
 import {
     mdiAccount,
@@ -13,6 +14,9 @@ import {
     mdiSecurity,
     mdiAccountRemove,
     mdiLogin,
+    mdiPlus,
+    mdiMagnify,
+    mdiAccountCircleOutline,
 } from "@mdi/js";
 import CreateUserDialog from "./components/CreateUserDialog";
 import { ContextMenu, ContextMenuItem, useContextMenu } from "@/common/components/ContextMenu";
@@ -20,8 +24,15 @@ import { ActionConfirmDialog } from "@/common/components/ActionConfirmDialog/Act
 import PasswordChange from "@/pages/Settings/pages/Account/dialogs/PasswordChange";
 import { useNavigate } from "react-router-dom";
 
+const ITEMS_PER_PAGE = 25;
+
 export const Users = () => {
     const [users, setUsers] = useState([]);
+    const [total, setTotal] = useState(0);
+    const [loading, setLoading] = useState(false);
+    const [searchQuery, setSearchQuery] = useState("");
+    const [debouncedSearch, setDebouncedSearch] = useState("");
+    const [currentPage, setCurrentPage] = useState(1);
     const { user, overrideToken } = useContext(UserContext);
     const navigate = useNavigate();
 
@@ -34,14 +45,43 @@ export const Users = () => {
 
     const contextMenu = useContextMenu();
 
-    const loadUsers = () => {
-        getRequest("users/list").then(response => {
-            setUsers([...response]);
-        });
-    };
+    useEffect(() => {
+        const timer = setTimeout(() => {
+            setDebouncedSearch(searchQuery);
+            setCurrentPage(1);
+        }, 300);
+        return () => clearTimeout(timer);
+    }, [searchQuery]);
+
+    const loadUsers = useCallback(async () => {
+        setLoading(true);
+        try {
+            const response = await getRequest("users/list");
+            const allUsers = Array.isArray(response) ? response : (response.users || []);
+            const totalCount = Array.isArray(response) ? response.length : (response.total || allUsers.length);
+
+            const filtered = debouncedSearch
+                ? allUsers.filter(u =>
+                    `${u.firstName} ${u.lastName} ${u.username}`.toLowerCase().includes(debouncedSearch.toLowerCase())
+                )
+                : allUsers;
+
+            const offset = (currentPage - 1) * ITEMS_PER_PAGE;
+            setUsers(filtered.slice(offset, offset + ITEMS_PER_PAGE));
+            setTotal(filtered.length);
+        } catch (error) {
+            setUsers([]);
+            setTotal(0);
+        } finally {
+            setLoading(false);
+        }
+    }, [currentPage, debouncedSearch]);
+
+    useEffect(() => {
+        loadUsers();
+    }, [loadUsers]);
 
     const openContextMenu = (e, userId) => {
-        e.preventDefault();
         e.stopPropagation();
         setContextUserId(userId);
         contextMenu.open(e);
@@ -66,9 +106,72 @@ export const Users = () => {
         });
     };
 
-    useEffect(() => {
-        loadUsers();
-    }, [user]);
+    const handlePageChange = useCallback((page) => {
+        setCurrentPage(page);
+    }, []);
+
+    const pagination = useMemo(() => ({
+        total,
+        currentPage,
+        itemsPerPage: ITEMS_PER_PAGE,
+    }), [total, currentPage]);
+
+    const contextUser = users.find(u => u.id === contextUserId);
+
+    const columns = useMemo(() => [
+        {
+            key: "user",
+            label: "User",
+            icon: mdiAccountCircleOutline,
+            className: "user-cell-wrapper",
+            render: (currentUser) => (
+                <div className="user-cell">
+                    <div className={`user-icon ${currentUser.role === "admin" ? "primary" : "default"}`}>
+                        <Icon path={currentUser.role === "admin" ? mdiShieldAccount : mdiAccount} />
+                    </div>
+                    <div className="user-info">
+                        <span className="name">{currentUser.firstName} {currentUser.lastName}</span>
+                        <span className="username">@{currentUser.username}</span>
+                    </div>
+                </div>
+            ),
+        },
+        {
+            key: "role",
+            label: "Role",
+            icon: mdiShieldAccount,
+            mobileLabel: "Role",
+            render: (currentUser) => (
+                <span className={`role-badge ${currentUser.role}`}>
+                    {currentUser.role === "admin" ? "Admin" : "User"}
+                </span>
+            ),
+        },
+        {
+            key: "totp",
+            label: "Two-Factor",
+            icon: mdiLock,
+            mobileLabel: "2FA",
+            render: (currentUser) => (
+                <div className={`totp-badge ${currentUser.totpEnabled ? "enabled" : "disabled"}`}>
+                    <Icon path={mdiLock} />
+                    <span>{currentUser.totpEnabled ? "Enabled" : "Disabled"}</span>
+                </div>
+            ),
+        },
+        {
+            key: "actions",
+            label: "",
+            className: "actions-cell",
+            render: (currentUser) => (
+                <Icon
+                    path={mdiDotsVertical}
+                    className="menu-trigger"
+                    onClick={(e) => openContextMenu(e, currentUser.id)}
+                />
+            ),
+        },
+    ], []);
 
     return (
         <div className="users-page">
@@ -89,34 +192,34 @@ export const Users = () => {
                             accountId={contextUserId} />
 
             <div className="users-header">
-                <h2>Users ({users.length})</h2>
-                <Button onClick={() => setCreateUserDialogOpen(true)} text="Create New User" />
+                <h2>Users ({total})</h2>
+                <div className="header-actions">
+                    <div className="search-box">
+                        <Icon path={mdiMagnify} />
+                        <input
+                            type="text"
+                            placeholder="Search users..."
+                            value={searchQuery}
+                            onChange={(e) => setSearchQuery(e.target.value)}
+                        />
+                    </div>
+                    <Button onClick={() => setCreateUserDialogOpen(true)} text="Create New User" icon={mdiPlus} />
+                </div>
             </div>
 
-            {users.map(currentUser => (
-                <div 
-                    key={currentUser.id} 
-                    className="user-item"
-                    onContextMenu={(e) => openContextMenu(e, currentUser.id)}
-                >
-                    <div className="user-info">
-                        <div className={"icon-container" + (currentUser.role === "admin" ? " icon-admin" : "")}>
-                            <Icon path={currentUser.role === "admin" ? mdiShieldAccount : mdiAccount} />
-                        </div>
-                        <div className="user-details">
-                            <h2>{currentUser.firstName} {currentUser.lastName}</h2>
-                            <p>@{currentUser.username}</p>
-                        </div>
-                    </div>
-                    <div className="user-actions">
-                        <div className={"user-security" + (currentUser.totpEnabled ? " security-enabled" : "")}>
-                            <Icon path={mdiLock} />
-                            <span>{currentUser.totpEnabled ? "2FA Enabled" : "2FA Disabled"}</span>
-                        </div>
-                        <Icon path={mdiDotsVertical} className="menu-icon" onClick={(e) => openContextMenu(e, currentUser.id)} />
-                    </div>
-                </div>
-            ))}
+            <PaginatedTable
+                data={users}
+                columns={columns}
+                pagination={pagination}
+                onPageChange={handlePageChange}
+                getRowKey={(user) => user.id}
+                loading={loading}
+                emptyState={{
+                    icon: mdiAccount,
+                    title: debouncedSearch ? "No matching users" : "No users found",
+                    subtitle: debouncedSearch ? "Try adjusting your search query." : "Create a new user to get started.",
+                }}
+            />
 
             <ContextMenu
                 isOpen={contextMenu.isOpen}
@@ -130,7 +233,7 @@ export const Users = () => {
                     onClick={() => setPasswordChangeDialogOpen(true)}
                 />
 
-                {users.find(u => u.id === contextUserId)?.role === "user" && user.id !== contextUserId && (
+                {contextUser?.role === "user" && user?.id !== contextUserId && (
                     <ContextMenuItem
                         icon={mdiSecurity}
                         label="Promote to Admin"
@@ -138,7 +241,7 @@ export const Users = () => {
                     />
                 )}
 
-                {users.find(u => u.id === contextUserId)?.role === "admin" && user.id !== contextUserId && (
+                {contextUser?.role === "admin" && user?.id !== contextUserId && (
                     <ContextMenuItem
                         icon={mdiAccount}
                         label="Demote to User"
@@ -146,18 +249,18 @@ export const Users = () => {
                     />
                 )}
 
-                {user.id !== contextUserId && (
+                {user?.id !== contextUserId && (
                     <>
+                        <ContextMenuItem
+                            icon={mdiLogin}
+                            label="Login as User"
+                            onClick={() => loginAsUser(contextUserId)}
+                        />
                         <ContextMenuItem
                             icon={mdiAccountRemove}
                             label="Delete User"
                             onClick={() => setConfirmDeleteDialogOpen(true)}
                             danger
-                        />
-                        <ContextMenuItem
-                            icon={mdiLogin}
-                            label="Login as User"
-                            onClick={() => loginAsUser(contextUserId)}
                         />
                     </>
                 )}

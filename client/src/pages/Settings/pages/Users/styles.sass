@@ -1,146 +1,235 @@
 @use "@/common/styles/colors"
 
-.users-page
-  display: flex
-  flex-direction: column
-  margin-top: 1rem
-  gap: 2rem
+$mobile: 768px
+$tablet: 1024px
 
-  @media (max-width: 768px)
-    gap: 1rem
-    margin-top: 0.5rem
+.users-page
+  width: 100%
+
+  .paginated-table .table-header,
+  .paginated-table .table-body .table-row
+    grid-template-columns: 2fr 1fr 1fr 0.5fr !important
+
+  .paginated-table .table-body .table-row .cell
+    @media (max-width: $mobile)
+      &.user-cell-wrapper::before,
+      &.actions-cell::before
+        display: none
+
+  .paginated-table .table-body .table-row .cell.actions-cell
+    justify-content: flex-end
+
+    @media (max-width: $mobile)
+      position: absolute
+      top: 0.625rem
+      right: 0.5rem
 
   .users-header
     display: flex
-    justify-content: space-between
     align-items: center
+    justify-content: space-between
+    margin-bottom: 1.5rem
+    gap: 1rem
 
-    @media (max-width: 768px)
+    @media (max-width: $mobile)
       flex-direction: column
-      align-items: flex-start
-      gap: 1rem
+      align-items: stretch
+      gap: 0.75rem
+      margin-bottom: 1rem
 
     h2
       margin: 0
+      font-size: 1.3rem
+      white-space: nowrap
 
-      @media (max-width: 768px)
-        font-size: 1.2rem
+      @media (max-width: $mobile)
+        font-size: 1.15rem
 
-  .user-item
-    border: 2px solid colors.$gray
-    padding: 1rem 1.5rem
-    border-radius: 1rem
-    display: flex
-    justify-content: space-between
-    align-items: center
-    transition: border-color 0.2s ease
-    width: 100%
-    box-sizing: border-box
-
-    @media (max-width: 1024px)
-      flex-direction: column
-      align-items: flex-start
-      gap: 1rem
-      padding: 1rem
-
-    &:hover
-      border-color: colors.$primary
-
-    .user-info
+    .header-actions
       display: flex
-      gap: 1.5rem
       align-items: center
+      gap: 0.75rem
+      flex: 1
+      justify-content: flex-end
 
-      @media (max-width: 1024px)
-        gap: 1rem
+      @media (max-width: $mobile)
+        flex-direction: column-reverse
         width: 100%
+        gap: 0.625rem
 
-    .user-details
+      .btn
+        @media (max-width: $mobile)
+          width: 100%
+          justify-content: center
+
+    .search-box
       display: flex
-      flex-direction: column
+      align-items: center
       gap: 0.5rem
+      background-color: colors.$lighter-background
+      border: 1px solid colors.$dark-gray
+      border-radius: 0.5rem
+      padding: 0.5rem 0.75rem
+      transition: border-color 0.15s ease
+      flex: 1
+      max-width: 280px
 
-      h2, p
-        margin: 0
+      @media (max-width: $mobile)
+        max-width: none
+        width: 100%
+        order: -1
 
-      h2
-        font-weight: 600
+      &:focus-within
+        border-color: colors.$primary
+        background-color: colors.$dark-gray
 
-        @media (max-width: 768px)
-          font-size: 1rem
-
-      p
-        font-weight: 600
+      svg
+        width: 1.125rem
+        height: 1.125rem
         color: colors.$subtext
+        flex-shrink: 0
 
-        @media (max-width: 768px)
-          font-size: 0.85rem
+      input
+        background: transparent
+        border: none
+        outline: none
+        color: colors.$white
+        font-size: 0.9rem
+        font-family: inherit
+        font-weight: 500
+        width: 100%
+        min-width: 0
 
-    .icon-container
+        &::placeholder
+          color: colors.$subtext
+
+  .user-cell
+    display: flex
+    align-items: center
+    gap: 0.75rem
+    flex: 1
+    min-width: 0
+
+    @media (max-width: $mobile)
+      gap: 0.625rem
+
+    .user-icon
       display: flex
       align-items: center
       justify-content: center
-      padding: 0.7rem
-      color: colors.$primary
-      background-color: colors.$primary-opacity
-      border-radius: 1rem
+      width: 2rem
+      height: 2rem
+      border-radius: 0.375rem
+      flex-shrink: 0
 
-      @media (max-width: 768px)
-        padding: 0.6rem
+      @media (max-width: $mobile)
+        width: 2.25rem
+        height: 2.25rem
 
       svg
-        width: 2rem
-        height: 2rem
+        width: 1.125rem
+        height: 1.125rem
 
-        @media (max-width: 768px)
-          width: 1.5rem
-          height: 1.5rem
+        @media (max-width: $mobile)
+          width: 1.25rem
+          height: 1.25rem
 
-    .icon-admin
-      color: colors.$warning
-      background-color: colors.$warning-opacity
-
-    .user-actions
-      display: flex
-      align-items: center
-      gap: 1.5rem
-
-      @media (max-width: 1024px)
-        width: 100%
-        justify-content: space-between
-        gap: 1rem
-
-      .user-security
-        display: flex
-        align-items: center
-        gap: 0.5rem
-        color: colors.$error
-        font-weight: 600
-
-        @media (max-width: 768px)
-          font-size: 0.85rem
-
+      &.primary
+        background-color: colors.$primary-opacity
         svg
-          width: 1.5rem
-          height: 1.5rem
+          color: colors.$primary
 
-          @media (max-width: 768px)
-            width: 1.2rem
-            height: 1.2rem
+      &.default
+        background-color: colors.$gray
+        svg
+          color: colors.$subtext
 
-      .security-enabled
-        color: colors.$success
+    .user-info
+      display: flex
+      flex-direction: column
+      gap: 0.125rem
+      min-width: 0
+      flex: 1
 
-      .menu-icon
-        width: 1.5rem
-        height: 1.5rem
-        cursor: pointer
-        opacity: 0.7
-        transition: opacity 0.2s ease
+      .name
+        font-weight: 600
+        font-size: 0.9rem
+        white-space: nowrap
+        overflow: hidden
+        text-overflow: ellipsis
 
-        @media (max-width: 768px)
-          width: 1.3rem
-          height: 1.3rem
+        @media (max-width: $mobile)
+          font-size: 0.95rem
 
-        &:hover
-          opacity: 1
+      .username
+        color: colors.$subtext
+        font-size: 0.8rem
+
+  .role-badge
+    padding: 0.25rem 0.625rem
+    border-radius: 0.5rem
+    font-size: 0.75rem
+    font-weight: 500
+    text-transform: capitalize
+
+    @media (max-width: $mobile)
+      padding: 0.2rem 0.5rem
+      font-size: 0.7rem
+
+    &.admin
+      background-color: colors.$primary-opacity
+      color: colors.$primary
+
+    &.user
+      background-color: colors.$gray
+      color: colors.$subtext
+
+  .totp-badge
+    display: flex
+    align-items: center
+    gap: 0.375rem
+    padding: 0.25rem 0.5rem
+    border-radius: 0.375rem
+    font-size: 0.75rem
+    font-weight: 500
+
+    @media (max-width: $mobile)
+      padding: 0.2rem 0.4rem
+      font-size: 0.7rem
+      gap: 0.25rem
+
+    svg
+      width: 0.875rem
+      height: 0.875rem
+
+      @media (max-width: $mobile)
+        width: 0.75rem
+        height: 0.75rem
+
+    &.enabled
+      background-color: colors.$success-opacity
+      color: colors.$success
+
+    &.disabled
+      background-color: colors.$error-opacity
+      color: colors.$error
+
+  .menu-trigger
+    width: 1.5rem
+    height: 1.5rem
+    cursor: pointer
+    padding: 0.125rem
+    border-radius: 0.25rem
+    transition: background-color 0.1s ease
+    color: colors.$subtext
+
+    @media (max-width: $mobile)
+      width: 1.75rem
+      height: 1.75rem
+      padding: 0.25rem
+      background-color: colors.$gray
+      border-radius: 0.375rem
+
+    &:hover
+      background-color: colors.$gray
+      color: colors.$white
