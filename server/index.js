@@ -20,6 +20,8 @@ const serverRoutes = require("./routes/server");
 const containerRoutes = require("./routes/container");
 const stackRoutes = require("./routes/stack");
 const serviceRoutes = require("./routes/service");
+const sourceRoutes = require("./routes/source");
+const appsRoutes = require("./routes/apps");
 require("./utils/folder");
 
 process.on("uncaughtException", (err) => errorHandling(err));
@@ -38,6 +40,9 @@ app.route("/api/sessions", sessionRoutes);
 app.route("/api/servers", serverRoutes);
 app.route("/api/containers", containerRoutes);
 app.route("/api/stacks", stackRoutes);
+
+app.route("/api/sources", sourceRoutes);
+app.route("/api/apps", appsRoutes);
 
 app.route("/api/service", serviceRoutes);
 
