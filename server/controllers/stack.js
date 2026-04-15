@@ -200,13 +200,27 @@ module.exports.getStackContainers = async (id) => {
     const stack = await Stack.findByPk(id);
     if (!stack) return { code: 501, message: "Stack not found" };
 
-    const containers = await Container.findAll({
-        where: { serverId: stack.serverId },
-        order: [["name", "ASC"]],
-    });
+    const { session, error } = await getSessionForStack(stack);
+    if (error) return error;
 
-    const prefix = `${stack.name}-`;
-    return containers.filter(c => c.name.startsWith(prefix) || c.name === stack.name);
+    const docker = require("../utils/dockerApi")(session);
+    const filters = encodeURIComponent(JSON.stringify({ label: [`com.docker.compose.project=${stack.name}`] }));
+
+    let dockerContainers;
+    try {
+        dockerContainers = await docker.getJson(`/containers/json?all=true&filters=${filters}`);
+    } catch (err) {
+        logger.error(`Failed to fetch Docker containers for stack ${stack.name}: ${err.message}`);
+        return [];
+    }
+
+    return dockerContainers.map(dc => ({
+        containerId: dc.Id.substring(0, 12),
+        name: dc.Names?.[0]?.replace(/^\//, "") || "unknown",
+        image: dc.Image || "unknown",
+        state: dc.State || "unknown",
+        status: dc.Status || "",
+    }));
 };
 
 module.exports.getStackLogs = async (id, tail = 100, timestamps = false) => {
