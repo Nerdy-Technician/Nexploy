@@ -1,0 +1,82 @@
+@use "@/common/styles/colors"
+
+.wizard-steps
+  display: flex
+  align-items: center
+  padding: 0.75rem 1rem
+  flex-shrink: 0
+
+  .wizard-step-wrapper
+    display: flex
+    align-items: center
+    flex: 1
+
+    &:first-child
+      flex: 0
+
+  .wizard-line
+    flex: 1
+    height: 2px
+    background-color: colors.$gray
+    margin: 0 0.5rem
+    transition: background-color 0.2s ease
+
+    &.filled
+      background-color: colors.$primary
+
+  .wizard-step
+    display: flex
+    align-items: center
+    gap: 0.5rem
+    cursor: default
+    white-space: nowrap
+
+    &.completed
+      cursor: pointer
+
+      .wizard-step-circle
+        background-color: colors.$primary
+        border-color: colors.$primary
+        color: colors.$white
+
+      .wizard-step-label
+        color: colors.$subtext
+
+      &:hover .wizard-step-label
+        color: colors.$white
+
+    &.active
+      .wizard-step-circle
+        border-color: colors.$primary
+        background-color: colors.$primary-opacity
+        color: colors.$primary
+
+      .wizard-step-label
+        color: colors.$white
+
+    .wizard-step-circle
+      width: 1.5rem
+      height: 1.5rem
+      border-radius: 50%
+      border: 2px solid colors.$gray
+      display: flex
+      align-items: center
+      justify-content: center
+      flex-shrink: 0
+      transition: all 0.2s ease
+      background-color: transparent
+
+      span
+        font-size: 0.7rem
+        font-weight: 700
+        color: colors.$subtext
+
+      svg
+        width: 0.8rem
+        height: 0.8rem
+
+    .wizard-step-label
+      font-size: 0.8rem
+      font-weight: 600
+      color: colors.$subtext
+      transition: color 0.2s ease
