@@ -2,7 +2,7 @@ import "./styles.sass";
 import Icon from "@mdi/react";
 
 export const IconInput = ({ type, id, name, required, icon, placeholder, customClass,
-                              autoComplete, value, setValue, onChange, onBlur, onKeyDown, autoFocus, disabled }) => {
+                              autoComplete, value, setValue, onChange, onBlur, onFocus, onKeyDown, autoFocus, disabled }) => {
     const handleChange = (event) => {
         if (setValue) {
             setValue(event.target.value);
@@ -24,6 +24,7 @@ export const IconInput = ({ type, id, name, required, icon, placeholder, customC
                 placeholder={placeholder} 
                 autoComplete={autoComplete} 
                 onBlur={onBlur} 
+                onFocus={onFocus}
                 value={value} 
                 onChange={handleChange}
                 onKeyDown={onKeyDown}
