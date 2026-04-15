@@ -1,5 +1,5 @@
 import "./styles.sass";
-import Icon from "@mdi/react";
+import { Icon } from "@mdi/react";
 import { 
     mdiDotsVertical, mdiPlay, mdiStop, mdiRestart, mdiPause, 
     mdiDelete, mdiConsole, mdiTextBox, mdiInformationOutline, mdiDocker

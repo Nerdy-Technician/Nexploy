@@ -6,7 +6,7 @@ import { IconInput } from "@/common/components/IconInput/IconInput.jsx";
 import { SelectBox } from "@/common/components/SelectBox/SelectBox.jsx";
 import TabSwitcher from "@/common/components/TabSwitcher";
 import { mdiMagnify, mdiViewGrid, mdiViewList, mdiRefresh, mdiLoading } from "@mdi/js";
-import Icon from "@mdi/react";
+import { Icon } from "@mdi/react";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "@/common/contexts/ToastContext.jsx";
 import { Button } from "@/common/components/Button/Button.jsx";

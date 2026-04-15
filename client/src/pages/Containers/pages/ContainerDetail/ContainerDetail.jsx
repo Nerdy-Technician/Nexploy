@@ -3,7 +3,7 @@ import { useParams, useNavigate, useSearchParams } from "react-router-dom";
 import { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import { getRequest, postRequest, deleteRequest } from "@/common/utils/RequestUtil.js";
 import { useToast } from "@/common/contexts/ToastContext.jsx";
-import Icon from "@mdi/react";
+import { Icon } from "@mdi/react";
 import TabSwitcher from "@/common/components/TabSwitcher";
 import Loading from "@/common/components/Loading";
 import Terminal from "@/common/components/Terminal";

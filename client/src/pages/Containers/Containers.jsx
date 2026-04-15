@@ -1,5 +1,5 @@
 import "./styles.sass";
-import Icon from "@mdi/react";
+import { Icon } from "@mdi/react";
 import { mdiDocker } from "@mdi/js";
 import { Navigate, Route, Routes, useLocation } from "react-router-dom";
 import AllContainers from "./pages/AllContainers";
