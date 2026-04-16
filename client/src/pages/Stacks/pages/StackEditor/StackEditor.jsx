@@ -3,6 +3,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import { useState, useEffect, useCallback, useRef } from "react";
 import { getRequest, postRequest, putRequest } from "@/common/utils/RequestUtil.js";
 import { useToast } from "@/common/contexts/ToastContext.jsx";
+import { useEventBus } from "@/common/contexts/EventContext.jsx";
 import Editor from "@monaco-editor/react";
 import { Icon } from "@mdi/react";
 import TabSwitcher from "@/common/components/TabSwitcher";
@@ -69,6 +70,8 @@ export const StackEditor = () => {
     const [envLoading, setEnvLoading] = useState(false);
     const [envHasChanges, setEnvHasChanges] = useState(false);
     const [composerizeOpen, setComposerizeOpen] = useState(false);
+    const [actionLoading, setActionLoading] = useState(null);
+    const eventBus = useEventBus();
 
     const isNew = id === "new";
 
@@ -165,6 +168,11 @@ export const StackEditor = () => {
         fetchStack();
         fetchCompose();
     }, [isNew, fetchStack, fetchCompose]);
+
+    useEffect(() => {
+        if (!eventBus || isNew) return;
+        return eventBus.subscribe("stacks:updated", fetchStack);
+    }, [eventBus, isNew, fetchStack]);
 
     useEffect(() => {
         if (activeTab === "logs" && !isNew) {
@@ -298,12 +306,14 @@ export const StackEditor = () => {
     };
 
     const handleAction = async (action) => {
+        setActionLoading(action);
         try {
             await postRequest(`stacks/${id}/action`, { action });
             sendToast("Success", `Stack ${action} successful`);
-            fetchStack();
         } catch (err) {
             sendToast("Error", err.message || `Failed to ${action} stack`);
+        } finally {
+            setActionLoading(null);
         }
     };
 
@@ -371,14 +381,16 @@ export const StackEditor = () => {
                     {isNew ? (
                         <Button
                             text={creating ? "Creating..." : "Deploy Stack"}
-                            icon={creating ? mdiLoading : mdiRocket}
+                            icon={mdiRocket}
+                            loading={creating}
                             onClick={handleCreate}
                             disabled={creating || !stackName.trim() || !selectedServer}
                         />
                     ) : (
                         <Button
                             text={saving ? "Saving..." : "Save Changes"}
-                            icon={saving ? mdiLoading : mdiContentSave}
+                            icon={mdiContentSave}
+                            loading={saving}
                             onClick={handleSave}
                             disabled={!anyChanges || saving}
                         />
@@ -624,6 +636,8 @@ export const StackEditor = () => {
                                             text="Start Stack"
                                             icon={mdiPlay}
                                             onClick={() => handleAction('start')}
+                                            loading={actionLoading === 'start'}
+                                            disabled={!!actionLoading}
                                         />
                                     )}
                                     {isRunning && (
@@ -633,18 +647,24 @@ export const StackEditor = () => {
                                                 icon={mdiStop}
                                                 type="secondary"
                                                 onClick={() => handleAction('stop')}
+                                                loading={actionLoading === 'stop'}
+                                                disabled={!!actionLoading}
                                             />
                                             <Button
                                                 text="Restart"
                                                 icon={mdiRestart}
                                                 type="secondary"
                                                 onClick={() => handleAction('restart')}
+                                                loading={actionLoading === 'restart'}
+                                                disabled={!!actionLoading}
                                             />
                                             <Button
                                                 text="Hard Stop"
                                                 icon={mdiCloseOctagon}
                                                 type="danger"
                                                 onClick={() => handleAction('down')}
+                                                loading={actionLoading === 'down'}
+                                                disabled={!!actionLoading}
                                             />
                                         </>
                                     )}

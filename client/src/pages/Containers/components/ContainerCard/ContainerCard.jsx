@@ -2,7 +2,7 @@ import "./styles.sass";
 import { Icon } from "@mdi/react";
 import { 
     mdiDotsVertical, mdiPlay, mdiStop, mdiRestart, mdiPause, 
-    mdiDelete, mdiConsole, mdiTextBox, mdiInformationOutline, mdiDocker
+    mdiDelete, mdiConsole, mdiTextBox, mdiInformationOutline, mdiDocker, mdiLoading
 } from "@mdi/js";
 import { ContextMenu, ContextMenuItem } from "@/common/components/ContextMenu";
 import { useState } from "react";
@@ -19,7 +19,7 @@ const getPrimaryPort = (ports) => {
     return p.PrivatePort || p.container || "N/A";
 };
 
-export const ContainerCard = ({ container, onClick, onAction, viewMode = "grid" }) => {
+export const ContainerCard = ({ container, onClick, onAction, viewMode = "grid", actionLoading = null }) => {
     const [contextMenuOpen, setContextMenuOpen] = useState(false);
     const [contextMenuPosition, setContextMenuPosition] = useState({ x: 0, y: 0 });
     const [menuTrigger, setMenuTrigger] = useState(null);
@@ -87,6 +87,11 @@ export const ContainerCard = ({ container, onClick, onAction, viewMode = "grid" 
         return (
             <>
                 <div className="container-card-list" onClick={() => onClick(container)} onContextMenu={handleContextMenu}>
+                    {actionLoading && (
+                        <div className="card-loading-overlay">
+                            <Icon path={mdiLoading} spin size={1} />
+                        </div>
+                    )}
                     <div className="list-left">
                         <div className={`container-icon-small ${statusColor}`}>
                             <Icon path={mdiDocker} />
@@ -114,6 +119,11 @@ export const ContainerCard = ({ container, onClick, onAction, viewMode = "grid" 
     return (
         <>
             <div className="container-card" onClick={() => onClick(container)} onContextMenu={handleContextMenu}>
+                {actionLoading && (
+                    <div className="card-loading-overlay">
+                        <Icon path={mdiLoading} spin size={1} />
+                    </div>
+                )}
                 <div className="container-card-header">
                     <div className="container-status-wrapper">
                         <div className={`container-icon ${statusColor}`}>

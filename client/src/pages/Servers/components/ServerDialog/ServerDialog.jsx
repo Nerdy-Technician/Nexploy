@@ -324,6 +324,7 @@ export const ServerDialog = ({ open, onClose, onServerCreated, server = null }) 
                             text={isLastStep ? (loading ? "Saving..." : (isEditMode ? "Save" : "Add Server")) : "Next"}
                             icon={isLastStep ? undefined : mdiArrowRight}
                             buttonType="submit" 
+                            loading={isLastStep && loading}
                             disabled={loading || !isStepValid(currentStep)} 
                         />
                     </div>

@@ -1,5 +1,6 @@
 import "./styles.sass";
 import { getRequest, postRequest, deleteRequest } from "@/common/utils/RequestUtil.js";
+import { useLiveData } from "@/common/hooks/useLiveData.js";
 import { useState, useMemo, useEffect, useCallback } from "react";
 import { IconInput } from "@/common/components/IconInput/IconInput.jsx";
 import { SelectBox } from "@/common/components/SelectBox/SelectBox.jsx";
@@ -7,7 +8,7 @@ import { Button } from "@/common/components/Button/Button.jsx";
 import PaginatedTable from "@/common/components/PaginatedTable";
 import { Icon } from "@mdi/react";
 import {
-    mdiMagnify, mdiRefresh, mdiLoading, mdiDownload, mdiDeleteSweep,
+    mdiMagnify, mdiLoading, mdiDownload, mdiDeleteSweep,
     mdiDelete, mdiCubeOutline
 } from "@mdi/js";
 import { useToast } from "@/common/contexts/ToastContext.jsx";
@@ -25,55 +26,34 @@ const formatDate = (ts) => {
 
 export const AllImages = () => {
     const { sendToast } = useToast();
-    const [images, setImages] = useState([]);
     const [servers, setServers] = useState([]);
-    const [loading, setLoading] = useState(true);
-    const [refreshing, setRefreshing] = useState(false);
     const [searchQuery, setSearchQuery] = useState("");
     const [selectedServer, setSelectedServer] = useState("all");
     const [pullDialogOpen, setPullDialogOpen] = useState(false);
     const [pruning, setPruning] = useState(false);
     const [currentPage, setCurrentPage] = useState(1);
+    const [removingImage, setRemovingImage] = useState(null);
 
     const fetchServers = useCallback(async () => {
         try {
             const data = await getRequest("servers");
             setServers(Array.isArray(data) ? data : []);
         } catch {
-            // servers list is optional
+
         }
     }, []);
 
     const fetchImages = useCallback(async () => {
-        try {
-            const url = selectedServer === "all" ? "images" : `images?serverId=${selectedServer}`;
-            const data = await getRequest(url);
-            setImages(Array.isArray(data) ? data : []);
-        } catch {
-            sendToast("Error", "Failed to load images");
-        } finally {
-            setLoading(false);
-        }
-    }, [sendToast, selectedServer]);
+        const url = selectedServer === "all" ? "images" : `images?serverId=${selectedServer}`;
+        const data = await getRequest(url);
+        return Array.isArray(data) ? data : [];
+    }, [selectedServer]);
+
+    const { data: images, loading } = useLiveData(fetchImages, "images:updated", { initialData: [] });
 
     useEffect(() => {
         fetchServers();
     }, [fetchServers]);
-
-    useEffect(() => {
-        setLoading(true);
-        fetchImages();
-    }, [fetchImages]);
-
-    const handleRefresh = async () => {
-        setRefreshing(true);
-        try {
-            await fetchImages();
-            sendToast("Success", "Images refreshed");
-        } finally {
-            setRefreshing(false);
-        }
-    };
 
     const handlePrune = async () => {
         if (selectedServer === "all") {
@@ -84,7 +64,6 @@ export const AllImages = () => {
         try {
             const result = await postRequest(`images/prune/${selectedServer}`);
             sendToast("Success", result.message || "Images pruned");
-            fetchImages();
         } catch (err) {
             sendToast("Error", err.message || "Failed to prune images");
         } finally {
@@ -94,18 +73,18 @@ export const AllImages = () => {
 
     const handleRemoveImage = async (e, serverId, imageId) => {
         e.stopPropagation();
+        setRemovingImage(imageId);
         try {
             await deleteRequest(`images/${serverId}/${encodeURIComponent(imageId)}`);
             sendToast("Success", "Image removed");
-            fetchImages();
         } catch (err) {
             sendToast("Error", err.message || "Failed to remove image");
+        } finally {
+            setRemovingImage(null);
         }
     };
 
-    const handlePullComplete = () => {
-        fetchImages();
-    };
+    const handlePullComplete = () => {};
 
     const serverOptions = useMemo(() => {
         const opts = [{ label: "All Servers", value: "all" }];
@@ -169,15 +148,16 @@ export const AllImages = () => {
             label: "Actions",
             render: (img) => (
                 <button
-                    className="action-btn danger"
+                    className={`action-btn danger${removingImage === img.shortId ? ' loading' : ''}`}
                     onClick={(e) => handleRemoveImage(e, img.serverId, img.shortId)}
                     title="Remove image"
+                    disabled={!!removingImage}
                 >
-                    <Icon path={mdiDelete} />
+                    <Icon path={removingImage === img.shortId ? mdiLoading : mdiDelete} spin={removingImage === img.shortId} />
                 </button>
             ),
         },
-    ], []);
+    ], [removingImage]);
 
     if (loading) {
         return (
@@ -213,18 +193,12 @@ export const AllImages = () => {
                     onClick={() => setPullDialogOpen(true)}
                 />
                 <Button
-                    icon={pruning ? mdiLoading : mdiDeleteSweep}
+                    icon={mdiDeleteSweep}
                     text="Prune"
                     type="secondary"
                     onClick={handlePrune}
                     disabled={pruning || selectedServer === "all"}
-                />
-                <Button
-                    icon={refreshing ? mdiLoading : mdiRefresh}
-                    text="Refresh"
-                    type="secondary"
-                    onClick={handleRefresh}
-                    disabled={refreshing}
+                    loading={pruning}
                 />
             </div>
 

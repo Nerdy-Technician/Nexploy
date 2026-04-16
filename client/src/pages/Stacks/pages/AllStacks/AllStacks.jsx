@@ -1,15 +1,15 @@
 import "./styles.sass";
 import { getRequest, postRequest, deleteRequest } from "@/common/utils/RequestUtil.js";
+import { useLiveData } from "@/common/hooks/useLiveData.js";
 import StackCard from "../../components/StackCard";
-import { useState, useMemo, useEffect, useCallback } from "react";
+import { useState, useMemo, useCallback } from "react";
 import IconInput from "@/common/components/IconInput";
 import SelectBox from "@/common/components/SelectBox";
 import TabSwitcher from "@/common/components/TabSwitcher";
-import { mdiMagnify, mdiViewGrid, mdiViewList, mdiRefresh, mdiLoading } from "@mdi/js";
+import { mdiMagnify, mdiViewGrid, mdiViewList, mdiLoading } from "@mdi/js";
 import { Icon } from "@mdi/react";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "@/common/contexts/ToastContext.jsx";
-import Button from "@/common/components/Button";
 
 const STATUS_OPTIONS = [
     { label: "All Status", value: "all" },
@@ -27,41 +27,13 @@ const VIEW_MODES = [
 export const AllStacks = () => {
     const navigate = useNavigate();
     const { sendToast } = useToast();
-    const [stacks, setStacks] = useState([]);
-    const [loading, setLoading] = useState(true);
-    const [refreshing, setRefreshing] = useState(false);
     const [searchQuery, setSearchQuery] = useState("");
     const [selectedStatus, setSelectedStatus] = useState("all");
     const [viewMode, setViewMode] = useState("grid");
+    const [actionLoading, setActionLoading] = useState(null);
 
-    const fetchStacks = useCallback(async () => {
-        try {
-            setStacks(await getRequest("stacks"));
-        } catch {
-            sendToast("Error", "Failed to load stacks");
-        } finally {
-            setLoading(false);
-        }
-    }, [sendToast]);
-
-    useEffect(() => {
-        fetchStacks();
-        const interval = setInterval(fetchStacks, 10000);
-        return () => clearInterval(interval);
-    }, [fetchStacks]);
-
-    const handleRefresh = async () => {
-        setRefreshing(true);
-        try {
-            await postRequest("stacks/refresh");
-            sendToast("Success", "Stack refresh started");
-            setTimeout(fetchStacks, 2000);
-        } catch {
-            sendToast("Error", "Failed to refresh stacks");
-        } finally {
-            setRefreshing(false);
-        }
-    };
+    const fetchStacks = useCallback(() => getRequest("stacks"), []);
+    const { data: stacks, loading } = useLiveData(fetchStacks, "stacks:updated", { initialData: [] });
 
     const filteredStacks = useMemo(() => {
         let filtered = stacks;
@@ -83,22 +55,26 @@ export const AllStacks = () => {
 
     const handleStackAction = async (stackId, action) => {
         if (action === "delete") {
+            setActionLoading({ id: stackId, action });
             try {
                 await deleteRequest(`stacks/${stackId}`);
                 sendToast("Success", "Stack deleted");
-                fetchStacks();
             } catch (err) {
                 sendToast("Error", err.message || "Failed to delete stack");
+            } finally {
+                setActionLoading(null);
             }
             return;
         }
 
+        setActionLoading({ id: stackId, action });
         try {
             await postRequest(`stacks/${stackId}/action`, { action });
             sendToast("Success", `Stack ${action} successful`);
-            fetchStacks();
         } catch (err) {
             sendToast("Error", err.message || `Failed to ${action} stack`);
+        } finally {
+            setActionLoading(null);
         }
     };
 
@@ -130,13 +106,6 @@ export const AllStacks = () => {
                         setSelected={setSelectedStatus}
                     />
                 </div>
-                <Button
-                    icon={refreshing ? mdiLoading : mdiRefresh}
-                    text="Refresh"
-                    type="secondary"
-                    onClick={handleRefresh}
-                    disabled={refreshing}
-                />
                 <TabSwitcher
                     tabs={VIEW_MODES}
                     activeTab={viewMode}
@@ -155,6 +124,7 @@ export const AllStacks = () => {
                                 onClick={(s) => navigate(`/stacks/edit/${s.id}`)}
                                 onAction={handleStackAction}
                                 viewMode={viewMode}
+                                actionLoading={actionLoading?.id === stack.id ? actionLoading.action : null}
                             />
                         ))}
                     </div>

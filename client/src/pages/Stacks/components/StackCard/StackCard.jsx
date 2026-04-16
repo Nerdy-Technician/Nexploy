@@ -1,10 +1,10 @@
 import "./styles.sass";
 import { Icon } from "@mdi/react";
-import { mdiDotsVertical, mdiCog, mdiPlay, mdiStop, mdiRestart, mdiCloseOctagon, mdiDelete, mdiPencil } from "@mdi/js";
+import { mdiDotsVertical, mdiCog, mdiPlay, mdiStop, mdiRestart, mdiCloseOctagon, mdiDelete, mdiPencil, mdiLoading } from "@mdi/js";
 import { ContextMenu, ContextMenuItem } from "@/common/components/ContextMenu";
 import { useState } from "react";
 
-export const StackCard = ({ stack, onClick, onAction, viewMode = "grid" }) => {
+export const StackCard = ({ stack, onClick, onAction, viewMode = "grid", actionLoading = null }) => {
     const [contextMenuOpen, setContextMenuOpen] = useState(false);
     const [contextMenuPosition, setContextMenuPosition] = useState({ x: 0, y: 0 });
     const [menuTrigger, setMenuTrigger] = useState(null);
@@ -53,6 +53,11 @@ export const StackCard = ({ stack, onClick, onAction, viewMode = "grid" }) => {
         return (
             <>
                 <div className="stack-card-list" onClick={() => onClick(stack)} onContextMenu={handleContextMenu}>
+                    {actionLoading && (
+                        <div className="card-loading-overlay">
+                            <Icon path={mdiLoading} spin size={1} />
+                        </div>
+                    )}
                     <div className="list-left">
                         <div className={`stack-icon-small ${isRunning ? 'running' : 'stopped'}`}>
                             {stack.icon ? (
@@ -138,6 +143,11 @@ export const StackCard = ({ stack, onClick, onAction, viewMode = "grid" }) => {
     return (
         <>
             <div className="stack-card" onClick={() => onClick(stack)} onContextMenu={handleContextMenu}>
+                {actionLoading && (
+                    <div className="card-loading-overlay">
+                        <Icon path={mdiLoading} spin size={1} />
+                    </div>
+                )}
                 <div className="stack-card-header">
                     <div className="stack-status-wrapper">
                         <div className={`stack-icon ${isRunning ? 'running' : 'stopped'}`}>

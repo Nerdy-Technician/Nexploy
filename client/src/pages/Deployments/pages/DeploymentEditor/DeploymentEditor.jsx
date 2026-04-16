@@ -383,7 +383,8 @@ export const DeploymentEditor = () => {
                     <div className="form-actions">
                         <Button
                             text={creating ? "Creating..." : "Create Deployment"}
-                            icon={creating ? mdiLoading : mdiRocketLaunchOutline}
+                            icon={mdiRocketLaunchOutline}
+                            loading={creating}
                             onClick={handleCreate}
                             disabled={creating}
                         />
@@ -470,7 +471,8 @@ export const DeploymentEditor = () => {
                 <div className="form-actions">
                     <Button
                         text={saving ? "Saving..." : "Save Changes"}
-                        icon={saving ? mdiLoading : mdiContentSave}
+                        icon={mdiContentSave}
+                        loading={saving}
                         onClick={handleSave}
                         disabled={saving}
                     />
@@ -504,7 +506,8 @@ export const DeploymentEditor = () => {
             <div className="form-actions">
                 <Button
                     text={saving ? "Saving..." : "Save Compose"}
-                    icon={saving ? mdiLoading : mdiContentSave}
+                    icon={mdiContentSave}
+                    loading={saving}
                     onClick={handleSave}
                     disabled={saving}
                 />
@@ -552,7 +555,8 @@ export const DeploymentEditor = () => {
                             />
                             <Button
                                 text={building || deployment?.status === "building" ? "Building..." : "Build & Deploy"}
-                                icon={building || deployment?.status === "building" ? mdiLoading : mdiHammer}
+                                icon={mdiHammer}
+                                loading={building || deployment?.status === "building"}
                                 onClick={handleBuild}
                                 disabled={building || deployment?.status === "building"}
                             />

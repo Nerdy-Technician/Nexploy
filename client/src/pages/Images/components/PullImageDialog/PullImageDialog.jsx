@@ -7,7 +7,7 @@ import { Button } from "@/common/components/Button/Button.jsx";
 import { SelectBox } from "@/common/components/SelectBox/SelectBox.jsx";
 import { IconInput } from "@/common/components/IconInput/IconInput.jsx";
 import { Icon } from "@mdi/react";
-import { mdiDownload, mdiLoading, mdiCubeOutline } from "@mdi/js";
+import { mdiDownload, mdiCubeOutline } from "@mdi/js";
 
 export const PullImageDialog = ({ open, onClose, servers, onPullComplete }) => {
     const { sendToast } = useToast();
@@ -91,7 +91,8 @@ export const PullImageDialog = ({ open, onClose, servers, onPullComplete }) => {
                         />
                         <Button
                             text={pulling ? "Pulling..." : "Pull Image"}
-                            icon={pulling ? mdiLoading : mdiDownload}
+                            icon={mdiDownload}
+                            loading={pulling}
                             buttonType="submit"
                             disabled={pulling || !selectedServer || !imageName.trim()}
                         />

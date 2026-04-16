@@ -187,7 +187,8 @@ export const Installed = () => {
                                         </div>
                                         <Button 
                                             text={isUpdating ? "Updating..." : "Update"}
-                                            icon={isUpdating ? mdiLoading : mdiUpdate}
+                                            icon={mdiUpdate}
+                                            loading={isUpdating}
                                             disabled={isUpdating}
                                             onClick={(e) => {
                                                 e.stopPropagation();

@@ -130,7 +130,8 @@ export const InstallDialog = ({ app, open, onClose, onInstalled }) => {
                     <Button text="Cancel" type="secondary" onClick={onClose} />
                     <Button
                         text={installing ? "Installing..." : isBundle ? "Install All" : "Install"}
-                        icon={installing ? mdiLoading : mdiDownload}
+                        icon={mdiDownload}
+                        loading={installing}
                         disabled={installing || !selectedServer || servers.length === 0}
                         onClick={handleInstall}
                     />

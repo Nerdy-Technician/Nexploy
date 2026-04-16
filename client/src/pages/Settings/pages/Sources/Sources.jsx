@@ -296,6 +296,7 @@ export const Sources = () => {
                             text={editSource ? "Save" : "Add Source"}
                             onClick={handleSubmit}
                             type="primary"
+                            loading={saving}
                             disabled={saving || !formData.url}
                         />
                     </div>

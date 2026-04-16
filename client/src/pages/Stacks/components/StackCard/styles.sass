@@ -1,6 +1,21 @@
 @use "@/common/styles/colors"
 
+.card-loading-overlay
+  position: absolute
+  inset: 0
+  background: rgba(0, 0, 0, 0.5)
+  display: flex
+  align-items: center
+  justify-content: center
+  border-radius: 0.5rem
+  z-index: 5
+  pointer-events: none
+
+  svg
+    color: white
+
 .stack-card-list
+  position: relative
   background-color: colors.$lighter-background
   border: 1px solid colors.$dark-gray
   border-radius: 0.5rem
@@ -178,6 +193,7 @@
           color: colors.$white
 
 .stack-card
+  position: relative
   background-color: colors.$lighter-background
   border: 1px solid colors.$dark-gray
   border-radius: 0.75rem

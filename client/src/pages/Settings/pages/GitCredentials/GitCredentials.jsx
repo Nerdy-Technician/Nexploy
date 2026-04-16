@@ -250,6 +250,7 @@ export const GitCredentials = () => {
                         <Button
                             text={editCred ? "Save" : "Add Credential"}
                             onClick={handleSubmit}
+                            loading={saving}
                             disabled={saving || !formData.name || !formData.host || (!editCred && !formData.token)}
                         />
                     </div>

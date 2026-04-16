@@ -1,15 +1,15 @@
 import "./styles.sass";
 import { getRequest, postRequest, deleteRequest } from "@/common/utils/RequestUtil.js";
+import { useLiveData } from "@/common/hooks/useLiveData.js";
 import ContainerCard from "../../components/ContainerCard";
-import { useState, useMemo, useEffect, useCallback } from "react";
+import { useState, useMemo, useCallback } from "react";
 import { IconInput } from "@/common/components/IconInput/IconInput.jsx";
 import { SelectBox } from "@/common/components/SelectBox/SelectBox.jsx";
 import TabSwitcher from "@/common/components/TabSwitcher";
-import { mdiMagnify, mdiViewGrid, mdiViewList, mdiRefresh, mdiLoading } from "@mdi/js";
+import { mdiMagnify, mdiViewGrid, mdiViewList, mdiLoading } from "@mdi/js";
 import { Icon } from "@mdi/react";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "@/common/contexts/ToastContext.jsx";
-import { Button } from "@/common/components/Button/Button.jsx";
 
 const STATUS_OPTIONS = [
     { label: "All Status", value: "all" },
@@ -27,41 +27,13 @@ const VIEW_MODES = [
 export const AllContainers = () => {
     const navigate = useNavigate();
     const { sendToast } = useToast();
-    const [containers, setContainers] = useState([]);
-    const [loading, setLoading] = useState(true);
-    const [refreshing, setRefreshing] = useState(false);
     const [searchQuery, setSearchQuery] = useState("");
     const [selectedStatus, setSelectedStatus] = useState("all");
     const [viewMode, setViewMode] = useState("grid");
+    const [actionLoading, setActionLoading] = useState(null);
 
-    const fetchContainers = useCallback(async () => {
-        try {
-            setContainers(await getRequest("containers"));
-        } catch {
-            sendToast("Error", "Failed to load containers");
-        } finally {
-            setLoading(false);
-        }
-    }, [sendToast]);
-
-    useEffect(() => {
-        fetchContainers();
-        const interval = setInterval(fetchContainers, 10000);
-        return () => clearInterval(interval);
-    }, [fetchContainers]);
-
-    const handleRefresh = async () => {
-        setRefreshing(true);
-        try {
-            await postRequest("containers/refresh");
-            sendToast("Success", "Container refresh started");
-            setTimeout(fetchContainers, 2000);
-        } catch {
-            sendToast("Error", "Failed to refresh containers");
-        } finally {
-            setRefreshing(false);
-        }
-    };
+    const fetchContainers = useCallback(() => getRequest("containers"), []);
+    const { data: containers, loading } = useLiveData(fetchContainers, "containers:updated", { initialData: [] });
 
     const filteredContainers = useMemo(() => {
         let filtered = containers;
@@ -87,22 +59,25 @@ export const AllContainers = () => {
             navigate(`/containers/detail/${containerId}?tab=${action}`);
             return;
         }
+        setActionLoading({ id: containerId, action });
         if (action === "remove") {
             try {
                 await deleteRequest(`containers/${containerId}`);
                 sendToast("Success", "Container removed");
-                fetchContainers();
             } catch (err) {
                 sendToast("Error", err.message || "Failed to remove container");
+            } finally {
+                setActionLoading(null);
             }
             return;
         }
         try {
             await postRequest(`containers/${containerId}/action`, { action });
             sendToast("Success", `Container ${action} successful`);
-            fetchContainers();
         } catch (err) {
             sendToast("Error", err.message || `Failed to ${action} container`);
+        } finally {
+            setActionLoading(null);
         }
     };
 
@@ -134,13 +109,6 @@ export const AllContainers = () => {
                         setSelected={setSelectedStatus}
                     />
                 </div>
-                <Button
-                    icon={refreshing ? mdiLoading : mdiRefresh}
-                    text="Refresh"
-                    type="secondary"
-                    onClick={handleRefresh}
-                    disabled={refreshing}
-                />
                 <TabSwitcher tabs={VIEW_MODES} activeTab={viewMode} onTabChange={setViewMode} iconOnly />
             </div>
 
@@ -154,6 +122,7 @@ export const AllContainers = () => {
                                 onClick={(c) => navigate(`/containers/detail/${c.containerId}`)}
                                 onAction={handleContainerAction}
                                 viewMode={viewMode}
+                                actionLoading={actionLoading?.id === container.containerId ? actionLoading.action : null}
                             />
                         ))}
                     </div>

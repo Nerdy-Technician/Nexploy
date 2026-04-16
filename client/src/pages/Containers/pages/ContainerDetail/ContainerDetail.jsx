@@ -3,6 +3,7 @@ import { useParams, useNavigate, useSearchParams } from "react-router-dom";
 import { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import { getRequest, postRequest, deleteRequest } from "@/common/utils/RequestUtil.js";
 import { useToast } from "@/common/contexts/ToastContext.jsx";
+import { useEventBus } from "@/common/contexts/EventContext.jsx";
 import { Icon } from "@mdi/react";
 import TabSwitcher from "@/common/components/TabSwitcher";
 import Loading from "@/common/components/Loading";
@@ -58,6 +59,8 @@ export const ContainerDetail = () => {
     const [liveMode, setLiveMode] = useState(false);
     const [liveLogs, setLiveLogs] = useState("");
     const liveWsRef = useRef(null);
+    const eventBus = useEventBus();
+    const [actionLoading, setActionLoading] = useState(null);
 
     const terminalWsUrl = useMemo(() => {
         if (!container || activeTab !== "terminal") return null;
@@ -106,6 +109,11 @@ export const ContainerDetail = () => {
     useEffect(() => { fetchContainer(); }, [fetchContainer]);
 
     useEffect(() => {
+        if (!eventBus) return;
+        return eventBus.subscribe("containers:updated", fetchContainer);
+    }, [eventBus, fetchContainer]);
+
+    useEffect(() => {
         if (container && activeTab === "overview") {
             fetchStats();
             const interval = setInterval(fetchStats, 5000);
@@ -137,22 +145,27 @@ export const ContainerDetail = () => {
     }, [activeTab, liveMode]);
 
     const handleAction = async (action) => {
+        setActionLoading(action);
         if (action === "remove") {
             try {
                 await deleteRequest(`containers/${id}`);
                 sendToast("Success", "Container removed");
                 navigate("/containers/all");
+                return;
             } catch (err) {
                 sendToast("Error", err.message || "Failed to remove container");
+            } finally {
+                setActionLoading(null);
             }
             return;
         }
         try {
             await postRequest(`containers/${id}/action`, { action });
             sendToast("Success", `Container ${action} successful`);
-            fetchContainer();
         } catch (err) {
             sendToast("Error", err.message || `Failed to ${action} container`);
+        } finally {
+            setActionLoading(null);
         }
     };
 
@@ -191,18 +204,18 @@ export const ContainerDetail = () => {
                 </div>
                 <div className="header-actions">
                     {(isStopped || isPaused) && (
-                        <Button text="Start" icon={mdiPlay} onClick={() => handleAction("start")} />
+                        <Button text="Start" icon={mdiPlay} onClick={() => handleAction("start")} loading={actionLoading === "start"} disabled={!!actionLoading} />
                     )}
                     {isRunning && (
                         <>
-                            <Button text="Stop" icon={mdiStop} type="secondary" onClick={() => handleAction("stop")} />
-                            <Button text="Restart" icon={mdiRestart} type="secondary" onClick={() => handleAction("restart")} />
+                            <Button text="Stop" icon={mdiStop} type="secondary" onClick={() => handleAction("stop")} loading={actionLoading === "stop"} disabled={!!actionLoading} />
+                            <Button text="Restart" icon={mdiRestart} type="secondary" onClick={() => handleAction("restart")} loading={actionLoading === "restart"} disabled={!!actionLoading} />
                         </>
                     )}
                     {isPaused && (
-                        <Button text="Unpause" icon={mdiPlay} onClick={() => handleAction("unpause")} />
+                        <Button text="Unpause" icon={mdiPlay} onClick={() => handleAction("unpause")} loading={actionLoading === "unpause"} disabled={!!actionLoading} />
                     )}
-                    <Button text="Remove" icon={mdiDelete} type="danger" onClick={() => handleAction("remove")} disabled={isRunning} />
+                    <Button text="Remove" icon={mdiDelete} type="danger" onClick={() => handleAction("remove")} disabled={isRunning || !!actionLoading} loading={actionLoading === "remove"} />
                 </div>
             </div>
 
