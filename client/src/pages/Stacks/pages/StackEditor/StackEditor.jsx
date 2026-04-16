@@ -28,7 +28,10 @@ import {
     mdiOpenInNew,
     mdiPlus,
     mdiDelete,
-    mdiApplicationVariableOutline
+    mdiApplicationVariableOutline,
+    mdiFileCogOutline,
+    mdiArrowLeftBold,
+    mdiRefresh,
 } from "@mdi/js";
 import Button from "@/common/components/Button";
 import IconInput from "@/common/components/IconInput";
@@ -41,6 +44,23 @@ const DEFAULT_COMPOSE = `services:
       - "8080:80"
     restart: unless-stopped
 `;
+
+const EDITOR_LANG_MAP = {
+    json: "json",
+    yml: "yaml",
+    yaml: "yaml",
+    toml: "ini",
+    ini: "ini",
+    conf: "ini",
+    cfg: "ini",
+    properties: "ini",
+    xml: "xml",
+};
+
+const getEditorLanguage = (filename) => {
+    const ext = filename.split(".").pop()?.toLowerCase();
+    return EDITOR_LANG_MAP[ext] || "plaintext";
+};
 
 export const StackEditor = () => {
     const { id } = useParams();
@@ -71,6 +91,13 @@ export const StackEditor = () => {
     const [envHasChanges, setEnvHasChanges] = useState(false);
     const [composerizeOpen, setComposerizeOpen] = useState(false);
     const [actionLoading, setActionLoading] = useState(null);
+    const [configFiles, setConfigFiles] = useState([]);
+    const [configLoading, setConfigLoading] = useState(false);
+    const [selectedConfigFile, setSelectedConfigFile] = useState(null);
+    const [configContent, setConfigContent] = useState("");
+    const [originalConfigContent, setOriginalConfigContent] = useState("");
+    const [configFileLoading, setConfigFileLoading] = useState(false);
+    const [configSaving, setConfigSaving] = useState(false);
     const eventBus = useEventBus();
 
     const isNew = id === "new";
@@ -174,6 +201,57 @@ export const StackEditor = () => {
         return eventBus.subscribe("stacks:updated", fetchStack);
     }, [eventBus, isNew, fetchStack]);
 
+    const fetchConfigFiles = useCallback(async () => {
+        if (isNew) return;
+        setConfigLoading(true);
+        try {
+            const data = await getRequest(`stacks/${id}/config-files`);
+            if (!data?.code) {
+                setConfigFiles(data.files || []);
+            }
+        } catch {
+            sendToast("Error", "Failed to discover config files");
+        } finally {
+            setConfigLoading(false);
+        }
+    }, [id, isNew, sendToast]);
+
+    const fetchConfigFileContent = useCallback(async (filePath) => {
+        setConfigFileLoading(true);
+        try {
+            const data = await getRequest(`stacks/${id}/config-file?path=${encodeURIComponent(filePath)}`);
+            if (!data?.code) {
+                setConfigContent(data.content || "");
+                setOriginalConfigContent(data.content || "");
+            } else {
+                sendToast("Error", data.message || "Failed to read file");
+            }
+        } catch {
+            sendToast("Error", "Failed to read config file");
+        } finally {
+            setConfigFileLoading(false);
+        }
+    }, [id, sendToast]);
+
+    const handleConfigSave = async () => {
+        if (!selectedConfigFile) return;
+        setConfigSaving(true);
+        try {
+            await putRequest(`stacks/${id}/config-file`, {
+                path: selectedConfigFile.path,
+                content: configContent,
+            });
+            setOriginalConfigContent(configContent);
+            sendToast("Success", "Config file saved");
+        } catch (err) {
+            sendToast("Error", err.message || "Failed to save config file");
+        } finally {
+            setConfigSaving(false);
+        }
+    };
+
+    const configHasChanges = selectedConfigFile && configContent !== originalConfigContent;
+
     useEffect(() => {
         if (activeTab === "logs" && !isNew) {
             fetchLogs(true);
@@ -184,7 +262,13 @@ export const StackEditor = () => {
         if (activeTab === "environment" && !isNew) {
             fetchEnv();
         }
-    }, [activeTab, isNew, fetchLogs, fetchContainers, fetchEnv]);
+        if (activeTab === "configuration" && !isNew) {
+            fetchConfigFiles();
+            setSelectedConfigFile(null);
+            setConfigContent("");
+            setOriginalConfigContent("");
+        }
+    }, [activeTab, isNew, fetchLogs, fetchContainers, fetchEnv, fetchConfigFiles]);
 
     useEffect(() => {
         if (!liveMode || activeTab !== "logs" || isNew) return;
@@ -222,7 +306,7 @@ export const StackEditor = () => {
         }
     }, [activeTab, liveMode]);
 
-    const anyChanges = hasChanges || envHasChanges;
+    const anyChanges = hasChanges || envHasChanges || configHasChanges;
 
     const handleEditorChange = (value) => {
         setComposeContent(value || "");
@@ -262,6 +346,17 @@ export const StackEditor = () => {
                         setEnvVars(filtered);
                         setOriginalEnvVars(JSON.stringify(filtered));
                         setEnvHasChanges(false);
+                    })
+                );
+            }
+
+            if (configHasChanges && selectedConfigFile) {
+                promises.push(
+                    putRequest(`stacks/${id}/config-file`, {
+                        path: selectedConfigFile.path,
+                        content: configContent,
+                    }).then(() => {
+                        setOriginalConfigContent(configContent);
                     })
                 );
             }
@@ -406,6 +501,7 @@ export const StackEditor = () => {
                                 tabs={[
                                     { key: "compose", label: "Compose File", icon: mdiFileDocumentOutline },
                                     { key: "environment", label: "Environment", icon: mdiApplicationVariableOutline },
+                                    { key: "configuration", label: "Configuration", icon: mdiFileCogOutline },
                                     { key: "containers", label: "Containers", icon: mdiPackageVariantClosed },
                                     { key: "logs", label: "Logs", icon: mdiTextBox }
                                 ]}
@@ -560,6 +656,101 @@ export const StackEditor = () => {
                                                 </div>
                                             )}
                                         </>
+                                    )}
+                                </div>
+                            )}
+
+                            {activeTab === 'configuration' && !isNew && (
+                                <div className="stack-configuration">
+                                    {configLoading ? (
+                                        <div className="config-loading">
+                                            <Icon path={mdiLoading} spin={true} size={1.5} />
+                                        </div>
+                                    ) : selectedConfigFile ? (
+                                        <div className="config-editor">
+                                            <div className="config-editor-header">
+                                                <button className="config-back-btn" onClick={() => {
+                                                    setSelectedConfigFile(null);
+                                                    setConfigContent("");
+                                                    setOriginalConfigContent("");
+                                                }}>
+                                                    <Icon path={mdiArrowLeftBold} />
+                                                </button>
+                                                <span className="config-file-path">{selectedConfigFile.name}</span>
+                                                <div className="config-editor-actions">
+                                                    {configHasChanges && (
+                                                        <span className="config-unsaved">Unsaved</span>
+                                                    )}
+                                                    <Button
+                                                        text={configSaving ? "Saving..." : "Save"}
+                                                        icon={mdiContentSave}
+                                                        loading={configSaving}
+                                                        onClick={handleConfigSave}
+                                                        disabled={!configHasChanges || configSaving}
+                                                    />
+                                                </div>
+                                            </div>
+                                            {configFileLoading ? (
+                                                <div className="config-loading">
+                                                    <Icon path={mdiLoading} spin={true} size={1.5} />
+                                                </div>
+                                            ) : (
+                                                <div className="monaco-wrapper">
+                                                    <Editor
+                                                        height="100%"
+                                                        defaultLanguage={getEditorLanguage(selectedConfigFile.name)}
+                                                        value={configContent}
+                                                        onChange={(value) => setConfigContent(value || "")}
+                                                        theme="vs-dark"
+                                                        options={{
+                                                            minimap: { enabled: false },
+                                                            fontSize: 14,
+                                                            lineNumbers: "on",
+                                                            roundedSelection: false,
+                                                            scrollBeyondLastLine: false,
+                                                            automaticLayout: true,
+                                                            tabSize: 2,
+                                                            wordWrap: "on",
+                                                            padding: { top: 16, bottom: 16 }
+                                                        }}
+                                                    />
+                                                </div>
+                                            )}
+                                        </div>
+                                    ) : configFiles.length > 0 ? (
+                                        <div className="config-file-list">
+                                            <div className="config-list-header">
+                                                <span>Found {configFiles.length} configuration file{configFiles.length !== 1 && "s"}</span>
+                                                <button className="config-refresh-btn" onClick={fetchConfigFiles}>
+                                                    <Icon path={mdiRefresh} />
+                                                </button>
+                                            </div>
+                                            {configFiles.map((file) => (
+                                                <div
+                                                    key={file.path}
+                                                    className="config-file-card"
+                                                    onClick={() => {
+                                                        setSelectedConfigFile(file);
+                                                        fetchConfigFileContent(file.path);
+                                                    }}
+                                                >
+                                                    <div className="config-file-icon">
+                                                        <Icon path={mdiFileCogOutline} />
+                                                    </div>
+                                                    <div className="config-file-info">
+                                                        <span className="config-file-name">{file.name.split("/").pop()}</span>
+                                                        <span className="config-file-rel">{file.name}</span>
+                                                    </div>
+                                                    <Icon path={mdiOpenInNew} className="config-file-open" />
+                                                </div>
+                                            ))}
+                                        </div>
+                                    ) : (
+                                        <div className="config-empty">
+                                            <Icon path={mdiFileCogOutline} size={2} />
+                                            <h3>No configuration files</h3>
+                                            <p>No .json, .yml, .yaml, .toml, .ini, .conf, .cfg, .properties, or .xml files were found in the stack directory</p>
+                                        </div>
                                     )}
                                 </div>
                             )}

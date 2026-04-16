@@ -1,6 +1,6 @@
 const { Hono } = require("hono");
-const { stackActionValidation, stackComposeValidation, stackCreateValidation, stackEnvValidation } = require("../validations/stack");
-const { listStacks, getStack, refreshStacks, stackAction, getStackCompose, updateStackCompose, createStack, deleteStack, getStackLogs, getStackContainers, getStackEnv, updateStackEnv } = require("../controllers/stack");
+const { stackActionValidation, stackComposeValidation, stackCreateValidation, stackEnvValidation, stackConfigFileValidation } = require("../validations/stack");
+const { listStacks, getStack, refreshStacks, stackAction, getStackCompose, updateStackCompose, createStack, deleteStack, getStackLogs, getStackContainers, getStackEnv, updateStackEnv, getStackConfigFiles, getStackConfigFile, updateStackConfigFile } = require("../controllers/stack");
 const { authenticate } = require("../middlewares/auth");
 const { isAdmin } = require("../middlewares/permission");
 const { validateSchema } = require("../utils/schema");
@@ -132,6 +132,33 @@ app.put("/:id/env", authenticate, requireResourceAccess("stack", "id", "manage")
     if (error) return c.json({ message: error }, 400);
 
     const result = await updateStackEnv(id, body.variables);
+    if (result?.code) return c.json(result, result.code === 501 ? 404 : 400);
+    return c.json(result);
+});
+
+app.get("/:id/config-files", authenticate, requireResourceAccess("stack", "id", "view"), async (c) => {
+    const id = parseInt(c.req.param("id"), 10);
+    const result = await getStackConfigFiles(id);
+    if (result?.code) return c.json(result, result.code === 501 ? 404 : 400);
+    return c.json(result);
+});
+
+app.get("/:id/config-file", authenticate, requireResourceAccess("stack", "id", "view"), async (c) => {
+    const id = parseInt(c.req.param("id"), 10);
+    const filePath = c.req.query("path");
+    if (!filePath) return c.json({ message: "path query parameter required" }, 400);
+    const result = await getStackConfigFile(id, filePath);
+    if (result?.code) return c.json(result, result.code === 501 ? 404 : 400);
+    return c.json(result);
+});
+
+app.put("/:id/config-file", authenticate, requireResourceAccess("stack", "id", "manage"), async (c) => {
+    const id = parseInt(c.req.param("id"), 10);
+    const body = await c.req.json();
+    const error = validateSchema(stackConfigFileValidation, body);
+    if (error) return c.json({ message: error }, 400);
+
+    const result = await updateStackConfigFile(id, body.path, body.content);
     if (result?.code) return c.json(result, result.code === 501 ? 404 : 400);
     return c.json(result);
 });

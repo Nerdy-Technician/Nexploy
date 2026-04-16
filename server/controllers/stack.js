@@ -317,4 +317,100 @@ module.exports.updateStackEnv = async (id, variables) => {
     }
 };
 
+const CONFIG_EXTENSIONS = ["json", "yml", "yaml", "toml", "ini", "conf", "cfg", "properties", "xml"];
+const MAX_CONFIG_FILES = 10;
+const MAX_CONFIG_SIZE = 1048576; // 1MB
+
+module.exports.getStackConfigFiles = async (id) => {
+    const stack = await Stack.findByPk(id);
+    if (!stack) return { code: 501, message: "Stack not found" };
+
+    const { session, error } = await getSessionForStack(stack);
+    if (error) return error;
+
+    try {
+        const extPattern = CONFIG_EXTENSIONS.map(e => `-name "*.${e}"`).join(" -o ");
+        const IGNORED_NAMES = ["docker-compose.yml", "docker-compose.yaml", "compose.yml", "compose.yaml", ".nexploy.json"];
+        const ignorePattern = IGNORED_NAMES.map(n => `! -name ${escapeShellArg(n)}`).join(" ");
+        const cmd = `find ${escapeShellArg(stack.directory)} -maxdepth 5 -type f \\( ${extPattern} \\) ${ignorePattern} ! -path '*/node_modules/*' ! -path '*/.git/*' ! -path '*/vendor/*' 2>/dev/null | head -n ${MAX_CONFIG_FILES}`;
+
+        const result = await session.exec(cmd, { stream: false });
+        if (result.code !== 0 && !result.stdout) return { files: [] };
+
+        const files = (result.stdout || "")
+            .split("\n")
+            .map(f => f.trim())
+            .filter(Boolean)
+            .map(fullPath => ({
+                path: fullPath,
+                name: fullPath.replace(stack.directory + "/", ""),
+            }));
+
+        return { files };
+    } catch (err) {
+        return { code: 504, message: `Failed to discover config files: ${err.message}` };
+    }
+};
+
+module.exports.getStackConfigFile = async (id, filePath) => {
+    const stack = await Stack.findByPk(id);
+    if (!stack) return { code: 501, message: "Stack not found" };
+
+    if (!filePath.startsWith(stack.directory + "/")) {
+        return { code: 503, message: "Access denied: file is outside stack directory" };
+    }
+
+    const ext = filePath.split(".").pop()?.toLowerCase();
+    if (!CONFIG_EXTENSIONS.includes(ext)) {
+        return { code: 503, message: "File type not allowed" };
+    }
+
+    const { session, error } = await getSessionForStack(stack);
+    if (error) return error;
+
+    try {
+        const sizeResult = await session.exec(`stat -c%s ${escapeShellArg(filePath)} 2>/dev/null`, { stream: false });
+        const size = parseInt(sizeResult.stdout?.trim(), 10);
+        if (size > MAX_CONFIG_SIZE) return { code: 503, message: "File too large (max 1MB)" };
+
+        const result = await session.exec(`cat ${escapeShellArg(filePath)}`, { stream: false });
+        if (result.code !== 0) throw new Error(result.stderr || "Failed to read file");
+
+        return { content: result.stdout };
+    } catch (err) {
+        return { code: 504, message: `Failed to read config file: ${err.message}` };
+    }
+};
+
+module.exports.updateStackConfigFile = async (id, filePath, content) => {
+    const stack = await Stack.findByPk(id);
+    if (!stack) return { code: 501, message: "Stack not found" };
+
+    if (!filePath.startsWith(stack.directory + "/")) {
+        return { code: 503, message: "Access denied: file is outside stack directory" };
+    }
+
+    const ext = filePath.split(".").pop()?.toLowerCase();
+    if (!CONFIG_EXTENSIONS.includes(ext)) {
+        return { code: 503, message: "File type not allowed" };
+    }
+
+    const { session, error } = await getSessionForStack(stack);
+    if (error) return error;
+
+    try {
+        const escaped = content.replace(/'/g, "'\\''");
+        const result = await session.exec(
+            `cat > ${escapeShellArg(filePath)} << 'NEXPLOY_EOF'\n${escaped}\nNEXPLOY_EOF`,
+            { stream: false }
+        );
+        if (result.code !== 0) throw new Error(result.stderr || "Failed to write file");
+
+        logger.info("Stack config file updated", { stackId: id, name: stack.name, file: filePath });
+        return { message: "Config file updated successfully" };
+    } catch (err) {
+        return { code: 504, message: `Failed to update config file: ${err.message}` };
+    }
+};
+
 const escapeShellArg = (arg) => `'${arg.replace(/'/g, "'\\''")}'`;
