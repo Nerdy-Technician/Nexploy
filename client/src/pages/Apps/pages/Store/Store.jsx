@@ -9,8 +9,9 @@ import { mdiMagnify, mdiLoading } from "@mdi/js";
 import { Icon } from "@mdi/react";
 import { getRequest } from "@/common/utils/RequestUtil.js";
 import { useToast } from "@/common/contexts/ToastContext.jsx";
+import { useNavigate } from "react-router-dom";
 
-export const Store = () => {
+export const Store = ({ deepLinkSource, deepLinkSlug }) => {
     const [selectedApp, setSelectedApp] = useState(null);
     const [dialogOpen, setDialogOpen] = useState(false);
     const [installDialogOpen, setInstallDialogOpen] = useState(false);
@@ -25,6 +26,8 @@ export const Store = () => {
     const [totalPages, setTotalPages] = useState(1);
     const { sendToast } = useToast();
     const searchTimeout = useRef(null);
+    const navigate = useNavigate();
+    const deepLinkHandled = useRef(false);
 
     const fetchApps = useCallback(async (p = 1, query = searchQuery, cat = selectedCategory) => {
         try {
@@ -55,6 +58,19 @@ export const Store = () => {
     useEffect(() => {
         fetchApps(1);
     }, []);
+
+    useEffect(() => {
+        if (!deepLinkSource || !deepLinkSlug || deepLinkHandled.current) return;
+        deepLinkHandled.current = true;
+
+        getRequest(`apps/${encodeURIComponent(deepLinkSource)}/${encodeURIComponent(deepLinkSlug)}`).then((appData) => {
+            setSelectedApp(appData);
+            setDialogOpen(true);
+        }).catch(() => {
+            sendToast("Error", "App not found");
+            navigate("/apps/store", { replace: true });
+        });
+    }, [deepLinkSource, deepLinkSlug]);
 
     useEffect(() => {
         if (searchTimeout.current) clearTimeout(searchTimeout.current);
@@ -150,7 +166,10 @@ export const Store = () => {
             <AppDetailDialog 
                 app={selectedApp} 
                 open={dialogOpen} 
-                onClose={() => setDialogOpen(false)}
+                onClose={() => {
+                    setDialogOpen(false);
+                    if (deepLinkSource && deepLinkSlug) navigate("/apps/store", { replace: true });
+                }}
                 onInstall={handleInstall}
             />
 
