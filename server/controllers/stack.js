@@ -322,6 +322,9 @@ const SQLITE_EXTENSIONS = ["db", "sqlite", "sqlite3"];
 const ALL_DISCOVERABLE_EXTENSIONS = [...CONFIG_EXTENSIONS, ...SQLITE_EXTENSIONS];
 const MAX_CONFIG_FILES = 10;
 const MAX_CONFIG_SIZE = 1048576; // 1MB
+const FIND_TIMEOUT_SECS = 5;
+const VOLUME_MAXDEPTH = 3;
+const STACK_MAXDEPTH = 5;
 
 const getVolumeMountPaths = async (session, stack) => {
     try {
@@ -373,9 +376,13 @@ module.exports.getStackConfigFiles = async (id) => {
         const extPattern = ALL_DISCOVERABLE_EXTENSIONS.map(e => `-name "*.${e}"`).join(" -o ");
         const IGNORED_NAMES = ["docker-compose.yml", "docker-compose.yaml", "compose.yml", "compose.yaml", ".nexploy.json"];
         const ignorePattern = IGNORED_NAMES.map(n => `! -name ${escapeShellArg(n)}`).join(" ");
+        const prunePattern = `-not \\( -name node_modules -o -name .git -o -name vendor -o -name __pycache__ -o -name .cache -o -name dist -o -name build -o -name .npm -o -name .yarn \\) -prune`;
 
-        const searchPaths = allowedPaths.map(p => escapeShellArg(p)).join(" ");
-        const cmd = `find ${searchPaths} -maxdepth 5 -type f \\( ${extPattern} \\) ${ignorePattern} ! -path '*/node_modules/*' ! -path '*/.git/*' ! -path '*/vendor/*' 2>/dev/null | head -n ${MAX_CONFIG_FILES}`;
+        const findCmds = allowedPaths.map(p => {
+            const depth = p === stack.directory ? STACK_MAXDEPTH : VOLUME_MAXDEPTH;
+            return `timeout ${FIND_TIMEOUT_SECS}s find ${escapeShellArg(p)} -maxdepth ${depth} ${prunePattern} -type f \\( ${extPattern} \\) ${ignorePattern} 2>/dev/null`;
+        });
+        const cmd = `{ ${findCmds.join(" ; ")} ; } | head -n ${MAX_CONFIG_FILES}`;
 
         const result = await session.exec(cmd, { stream: false });
         if (result.code !== 0 && !result.stdout) return { files: [] };
