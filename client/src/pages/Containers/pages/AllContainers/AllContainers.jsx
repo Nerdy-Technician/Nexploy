@@ -2,7 +2,7 @@ import "./styles.sass";
 import { getRequest, postRequest, deleteRequest } from "@/common/utils/RequestUtil.js";
 import { useLiveData } from "@/common/hooks/useLiveData.js";
 import ContainerCard from "../../components/ContainerCard";
-import { useState, useMemo, useCallback } from "react";
+import { useState, useMemo, useCallback, useEffect } from "react";
 import { IconInput } from "@/common/components/IconInput/IconInput.jsx";
 import { SelectBox } from "@/common/components/SelectBox/SelectBox.jsx";
 import TabSwitcher from "@/common/components/TabSwitcher";
@@ -31,8 +31,22 @@ export const AllContainers = () => {
     const [selectedStatus, setSelectedStatus] = useState("all");
     const [viewMode, setViewMode] = useState("grid");
     const [actionLoading, setActionLoading] = useState(null);
+    const [selectedServer, setSelectedServer] = useState("all");
+    const [serverOptions, setServerOptions] = useState([{ label: "All Servers", value: "all" }]);
 
-    const fetchContainers = useCallback(() => getRequest("containers"), []);
+    useEffect(() => {
+        getRequest("servers").then(servers => {
+            setServerOptions([
+                { label: "All Servers", value: "all" },
+                ...servers.map(s => ({ label: s.name, value: String(s.id) })),
+            ]);
+        });
+    }, []);
+
+    const fetchContainers = useCallback(() => {
+        const url = selectedServer === "all" ? "containers" : `containers?serverId=${selectedServer}`;
+        return getRequest(url);
+    }, [selectedServer]);
     const { data: containers, loading } = useLiveData(fetchContainers, "containers:updated", { initialData: [] });
 
     const filteredContainers = useMemo(() => {
@@ -103,6 +117,11 @@ export const AllContainers = () => {
                     />
                 </div>
                 <div className="filter-group">
+                    <SelectBox
+                        options={serverOptions}
+                        selected={selectedServer}
+                        setSelected={setSelectedServer}
+                    />
                     <SelectBox
                         options={STATUS_OPTIONS}
                         selected={selectedStatus}

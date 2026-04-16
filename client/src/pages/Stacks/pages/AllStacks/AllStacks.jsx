@@ -2,7 +2,7 @@ import "./styles.sass";
 import { getRequest, postRequest, deleteRequest } from "@/common/utils/RequestUtil.js";
 import { useLiveData } from "@/common/hooks/useLiveData.js";
 import StackCard from "../../components/StackCard";
-import { useState, useMemo, useCallback } from "react";
+import { useState, useMemo, useCallback, useEffect } from "react";
 import IconInput from "@/common/components/IconInput";
 import SelectBox from "@/common/components/SelectBox";
 import TabSwitcher from "@/common/components/TabSwitcher";
@@ -31,8 +31,22 @@ export const AllStacks = () => {
     const [selectedStatus, setSelectedStatus] = useState("all");
     const [viewMode, setViewMode] = useState("grid");
     const [actionLoading, setActionLoading] = useState(null);
+    const [selectedServer, setSelectedServer] = useState("all");
+    const [serverOptions, setServerOptions] = useState([{ label: "All Servers", value: "all" }]);
 
-    const fetchStacks = useCallback(() => getRequest("stacks"), []);
+    useEffect(() => {
+        getRequest("servers").then(servers => {
+            setServerOptions([
+                { label: "All Servers", value: "all" },
+                ...servers.map(s => ({ label: s.name, value: String(s.id) })),
+            ]);
+        });
+    }, []);
+
+    const fetchStacks = useCallback(() => {
+        const url = selectedServer === "all" ? "stacks" : `stacks?serverId=${selectedServer}`;
+        return getRequest(url);
+    }, [selectedServer]);
     const { data: stacks, loading } = useLiveData(fetchStacks, "stacks:updated", { initialData: [] });
 
     const filteredStacks = useMemo(() => {
@@ -100,6 +114,11 @@ export const AllStacks = () => {
                     />
                 </div>
                 <div className="filter-group">
+                    <SelectBox
+                        options={serverOptions}
+                        selected={selectedServer}
+                        setSelected={setSelectedServer}
+                    />
                     <SelectBox
                         options={STATUS_OPTIONS}
                         selected={selectedStatus}
