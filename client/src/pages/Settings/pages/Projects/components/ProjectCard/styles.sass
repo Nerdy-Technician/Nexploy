@@ -1,0 +1,63 @@
+@use "@/common/styles/colors"
+
+.project-card
+  background-color: colors.$lighter-background
+  border: 1px solid colors.$dark-gray
+  border-radius: 0.75rem
+  padding: 1rem 1.25rem
+  transition: border-color 0.15s ease
+  display: flex
+  justify-content: space-between
+  align-items: center
+  gap: 1rem
+  cursor: pointer
+
+  @media (max-width: 768px)
+    padding: 0.875rem 1rem
+
+  &:hover
+    border-color: colors.$primary
+
+  .project-card-info
+    display: flex
+    align-items: center
+    gap: 1rem
+    flex: 1
+    min-width: 0
+
+    .project-card-icon
+      width: 1.75rem
+      height: 1.75rem
+      color: colors.$primary
+      opacity: 0.9
+      flex-shrink: 0
+
+    .project-card-details
+      flex: 1
+      min-width: 0
+
+      h3
+        margin: 0
+        color: colors.$white
+        font-size: 0.95rem
+        font-weight: 600
+
+      p
+        color: colors.$subtext
+        font-size: 0.825rem
+        margin: 0.25rem 0 0
+        white-space: nowrap
+        overflow: hidden
+        text-overflow: ellipsis
+
+  .project-card-actions
+    display: flex
+    align-items: center
+    gap: 0.25rem
+    flex-shrink: 0
+
+    .chevron
+      width: 1.25rem
+      height: 1.25rem
+      color: colors.$subtext
+      margin-left: 0.25rem

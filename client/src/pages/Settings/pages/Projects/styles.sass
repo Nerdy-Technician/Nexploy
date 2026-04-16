@@ -1,0 +1,142 @@
+@use "@/common/styles/colors"
+
+$mobile: 768px
+
+.projects-page
+  display: flex
+  flex-direction: column
+  gap: 1.5rem
+  width: 100%
+
+  .section-header
+    display: flex
+    justify-content: space-between
+    align-items: flex-start
+    margin-bottom: 1rem
+
+    @media (max-width: $mobile)
+      flex-direction: column
+      gap: 0.75rem
+
+    .header-content
+      h2, h3
+        margin: 0
+        color: colors.$white
+        font-size: 1.3rem
+        font-weight: 600
+
+        svg
+          width: 1.1rem
+          height: 1.1rem
+          margin-right: 0.4rem
+          vertical-align: middle
+
+      h3
+        font-size: 1.1rem
+
+      p
+        color: colors.$subtext
+        font-size: 0.9rem
+        margin: 0.4rem 0 0
+
+  .empty-state
+    display: flex
+    flex-direction: column
+    align-items: center
+    justify-content: center
+    padding: 3rem 1rem
+    text-align: center
+
+    &.small
+      padding: 1.5rem 1rem
+
+      p
+        color: colors.$subtext
+        font-size: 0.9rem
+        margin: 0
+
+    svg
+      width: 3rem
+      height: 3rem
+      color: colors.$subtext
+      margin-bottom: 1rem
+
+    h2
+      margin: 0 0 0.5rem
+      font-size: 1.15rem
+      font-weight: 600
+      color: colors.$white
+
+    p
+      color: colors.$subtext
+      font-size: 0.9rem
+      margin: 0
+
+  .projects-list
+    display: flex
+    flex-direction: column
+    gap: 0.5rem
+
+  .project-detail-view
+    .detail-header
+      margin-bottom: 1.5rem
+
+      .back-btn
+        display: flex
+        align-items: center
+        gap: 0.25rem
+        background: none
+        border: none
+        color: colors.$primary
+        cursor: pointer
+        padding: 0
+        font-size: 0.85rem
+        font-family: inherit
+        font-weight: 600
+        margin-bottom: 0.75rem
+
+        svg
+          width: 1.1rem
+          height: 1.1rem
+
+        &:hover
+          text-decoration: underline
+
+      h2
+        margin: 0
+        color: colors.$white
+        font-size: 1.4rem
+        font-weight: 700
+
+      .project-description
+        color: colors.$subtext
+        font-size: 0.9rem
+        margin: 0.4rem 0 0
+
+  .action-btn
+    width: 2rem
+    height: 2rem
+    border-radius: 0.5rem
+    border: none
+    background: transparent
+    color: colors.$subtext
+    cursor: pointer
+    display: flex
+    align-items: center
+    justify-content: center
+    transition: all 0.15s ease
+
+    svg
+      width: 1rem
+      height: 1rem
+
+    &:hover
+      background-color: colors.$dark-gray
+
+    &.delete-btn:hover
+      background-color: colors.$error-opacity
+      color: colors.$error
+
+    &.edit-btn:hover
+      background-color: colors.$primary-opacity
+      color: colors.$primary

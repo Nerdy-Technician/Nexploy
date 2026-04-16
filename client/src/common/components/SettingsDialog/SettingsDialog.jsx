@@ -1,7 +1,7 @@
 import { createPortal } from "react-dom";
 import { useContext, useState, useEffect, useCallback, useMemo } from "react";
 import { Icon } from "@mdi/react";
-import { mdiClose, mdiLogout, mdiAccountCircleOutline, mdiAccountGroup, mdiClockStarFourPointsOutline, mdiCloudDownload, mdiGit } from "@mdi/js";
+import { mdiClose, mdiLogout, mdiAccountCircleOutline, mdiAccountGroup, mdiClockStarFourPointsOutline, mdiCloudDownload, mdiGit, mdiFolderAccount } from "@mdi/js";
 import { UserContext } from "@/common/contexts/UserContext.jsx";
 import { ActionConfirmDialog } from "@/common/components/ActionConfirmDialog/ActionConfirmDialog.jsx";
 import Account from "@/pages/Settings/pages/Account";
@@ -9,11 +9,13 @@ import Sessions from "@/pages/Settings/pages/Sessions";
 import Users from "@/pages/Settings/pages/Users";
 import Sources from "@/pages/Settings/pages/Sources";
 import GitCredentials from "@/pages/Settings/pages/GitCredentials";
+import Projects from "@/pages/Settings/pages/Projects";
 import "./styles.sass";
 
 const userPages = [
     { title: "Account", key: "account", icon: mdiAccountCircleOutline, content: <Account /> },
     { title: "Sessions", key: "sessions", icon: mdiClockStarFourPointsOutline, content: <Sessions /> },
+    { title: "Projects", key: "projects", icon: mdiFolderAccount, content: <Projects /> },
 ];
 
 const adminPages = [
