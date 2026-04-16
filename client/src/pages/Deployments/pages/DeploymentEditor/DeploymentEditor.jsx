@@ -16,7 +16,7 @@ import {
     mdiFileDocumentOutline,
     mdiTextBox,
     mdiLoading,
-    mdiRocketLaunchOutline,
+    mdiCloudUploadOutline,
     mdiCheckCircleOutline,
     mdiCloseCircleOutline,
     mdiClockOutline,
@@ -287,7 +287,7 @@ export const DeploymentEditor = () => {
                                 <IconInput
                                     type="text"
                                     placeholder="my-app"
-                                    icon={mdiRocketLaunchOutline}
+                                    icon={mdiCloudUploadOutline}
                                     value={name}
                                     setValue={setName}
                                 />
@@ -383,7 +383,7 @@ export const DeploymentEditor = () => {
                     <div className="form-actions">
                         <Button
                             text={creating ? "Creating..." : "Create Deployment"}
-                            icon={mdiRocketLaunchOutline}
+                            icon={mdiCloudUploadOutline}
                             loading={creating}
                             onClick={handleCreate}
                             disabled={creating}

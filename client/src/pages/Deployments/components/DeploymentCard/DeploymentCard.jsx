@@ -2,7 +2,7 @@ import "./styles.sass";
 import { Icon } from "@mdi/react";
 import {
     mdiSourceBranch,
-    mdiRocketLaunchOutline,
+    mdiCloudUploadOutline,
     mdiHammer,
     mdiDelete,
     mdiLoading,
@@ -41,7 +41,7 @@ export const DeploymentCard = ({ deployment, onClick, onBuild, onDelete }) => {
         <div className="deployment-card" onClick={() => onClick(deployment)}>
             <div className="deployment-card-header">
                 <div className="deployment-icon-wrap">
-                    <Icon path={mdiRocketLaunchOutline} />
+                    <Icon path={mdiCloudUploadOutline} />
                 </div>
                 <div className="deployment-actions" onClick={(e) => e.stopPropagation()}>
                     <button

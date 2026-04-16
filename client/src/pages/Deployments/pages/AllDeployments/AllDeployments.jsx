@@ -4,7 +4,7 @@ import DeploymentCard from "../../components/DeploymentCard";
 import { useState, useMemo, useEffect, useCallback } from "react";
 import IconInput from "@/common/components/IconInput";
 import SelectBox from "@/common/components/SelectBox";
-import { mdiMagnify, mdiLoading, mdiRocketLaunchOutline } from "@mdi/js";
+import { mdiMagnify, mdiLoading, mdiCloudUploadOutline } from "@mdi/js";
 import { Icon } from "@mdi/react";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "@/common/contexts/ToastContext.jsx";
@@ -124,7 +124,7 @@ export const AllDeployments = () => {
                     </div>
                 ) : (
                     <div className="no-results">
-                        <Icon path={mdiRocketLaunchOutline} />
+                        <Icon path={mdiCloudUploadOutline} />
                         <h3>No deployments found</h3>
                         <p>{deployments.length === 0 ? "Create your first deployment to get started." : "Try adjusting your search or filters"}</p>
                     </div>

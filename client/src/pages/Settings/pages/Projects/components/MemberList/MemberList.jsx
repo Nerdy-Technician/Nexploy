@@ -8,12 +8,12 @@ import {
     mdiAccount,
     mdiClose,
     mdiEye,
-    mdiRocketLaunch,
+    mdiCloudUploadOutline,
 } from "@mdi/js";
 
 const PERMISSIONS = [
     { value: "view", label: "View", icon: mdiEye },
-    { value: "deploy", label: "Deploy", icon: mdiRocketLaunch },
+    { value: "deploy", label: "Deploy", icon: mdiCloudUploadOutline },
     { value: "manage", label: "Manage", icon: mdiShieldAccount },
 ];
 

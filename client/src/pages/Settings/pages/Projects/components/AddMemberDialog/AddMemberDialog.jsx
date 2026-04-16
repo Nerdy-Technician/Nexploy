@@ -3,11 +3,11 @@ import { DialogProvider } from "@/common/components/Dialog";
 import SelectBox from "@/common/components/SelectBox";
 import Button from "@/common/components/Button";
 import { Icon } from "@mdi/react";
-import { mdiAccountPlus, mdiEye, mdiRocketLaunch, mdiShieldAccount } from "@mdi/js";
+import { mdiAccountPlus, mdiEye, mdiCloudUploadOutline, mdiShieldAccount } from "@mdi/js";
 
 const PERMISSIONS = [
     { value: "view", label: "View", icon: mdiEye, description: "Read-only access to assigned resources" },
-    { value: "deploy", label: "Deploy", icon: mdiRocketLaunch, description: "Can start, stop, restart, and build" },
+    { value: "deploy", label: "Deploy", icon: mdiCloudUploadOutline, description: "Can start, stop, restart, and build" },
     { value: "manage", label: "Manage", icon: mdiShieldAccount, description: "Full control over assigned resources" },
 ];
 

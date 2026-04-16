@@ -5,7 +5,7 @@ import {
     mdiServerNetwork,
     mdiLayersTriple,
     mdiDocker,
-    mdiRocketLaunch,
+    mdiCloudUploadOutline,
     mdiPlus,
     mdiClose,
 } from "@mdi/js";
@@ -14,7 +14,7 @@ const RESOURCE_TYPE_ICONS = {
     server: mdiServerNetwork,
     stack: mdiLayersTriple,
     container: mdiDocker,
-    deployment: mdiRocketLaunch,
+    deployment: mdiCloudUploadOutline,
 };
 
 export const ResourceList = ({ resources, isAdmin, getResourceName, onAddResource, onRemoveResource }) => {

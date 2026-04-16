@@ -22,7 +22,7 @@ import {
     mdiFileDocumentOutline,
     mdiTextBox,
     mdiLoading,
-    mdiRocket,
+    mdiCloudUploadOutline,
     mdiPackageVariantClosed,
     mdiDocker,
     mdiOpenInNew,
@@ -485,7 +485,7 @@ export const StackEditor = () => {
                     {isNew ? (
                         <Button
                             text={creating ? "Creating..." : "Deploy Stack"}
-                            icon={mdiRocket}
+                            icon={mdiCloudUploadOutline}
                             loading={creating}
                             onClick={handleCreate}
                             disabled={creating || !stackName.trim() || !selectedServer}

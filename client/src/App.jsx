@@ -7,6 +7,7 @@ import { createBrowserRouter, Navigate, RouterProvider } from "react-router-dom"
 import "@/common/styles/main.sass";
 import { lazy } from "react";
 import Root from "@/common/layouts/Root.jsx";
+import Overview from "@/pages/Overview";
 import Stacks from "@/pages/Stacks";
 import Deployments from "@/pages/Deployments";
 import Apps from "@/pages/Apps";
@@ -21,7 +22,8 @@ const App = () => {
             path: "/",
             element: <Root />,
             children: [
-                { path: "/", element: <Navigate to="/servers" /> },
+                { path: "/", element: <Navigate to="/overview" /> },
+                { path: "/overview", element: <Overview /> },
                 { path: "/servers/*", element: <Servers/> },
                 { path: "/containers/*", element: <Containers/> },
                 { path: "/images", element: <Images/> },

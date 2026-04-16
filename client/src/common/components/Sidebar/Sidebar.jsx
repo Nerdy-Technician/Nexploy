@@ -8,7 +8,8 @@ import {
     mdiDocker,
     mdiCubeOutline,
     mdiAccountCogOutline,
-    mdiRocketLaunchOutline,
+    mdiCloudUploadOutline,
+    mdiViewDashboardOutline,
 } from "@mdi/js";
 import { Icon } from "@mdi/react";
 import { useLocation, useNavigate } from "react-router-dom";
@@ -34,11 +35,12 @@ export const Sidebar = () => {
     const { logout, user } = useContext(UserContext);
 
     const navigation = [
+        { title: "Overview", path: "/overview", icon: mdiViewDashboardOutline },
         { title: "Servers", path: "/servers", icon: mdiServerOutline },
         { title: "Containers", path: "/containers", icon: mdiDocker },
         { title: "Images", path: "/images", icon: mdiCubeOutline },
         { title: "Stacks", path: "/stacks", icon: mdiLayers },
-        { title: "Deployments", path: "/deployments", icon: mdiRocketLaunchOutline },
+        { title: "Deployments", path: "/deployments", icon: mdiCloudUploadOutline },
         { title: "Apps", path: "/apps", icon: mdiPackageVariant }
     ];
 

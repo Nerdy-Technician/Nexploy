@@ -1,6 +1,6 @@
 import "./styles.sass";
 import { Icon } from "@mdi/react";
-import { mdiRocketLaunchOutline, mdiPlus } from "@mdi/js";
+import { mdiCloudUploadOutline, mdiPlus } from "@mdi/js";
 import { Navigate, Route, Routes, useLocation, useNavigate } from "react-router-dom";
 import AllDeployments from "./pages/AllDeployments";
 import DeploymentEditor from "./pages/DeploymentEditor";
@@ -18,7 +18,7 @@ export const Deployments = () => {
                 <div className="deployments-header">
                     <div className="header-content">
                         <div className="header-icon">
-                            <Icon path={mdiRocketLaunchOutline} />
+                            <Icon path={mdiCloudUploadOutline} />
                         </div>
                         <div className="header-text">
                             <h1>Deployments</h1>
