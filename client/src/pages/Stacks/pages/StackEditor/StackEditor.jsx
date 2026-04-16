@@ -37,7 +37,7 @@ import {
 import Button from "@/common/components/Button";
 import IconInput from "@/common/components/IconInput";
 import ComposerizeDialog from "../../components/ComposerizeDialog";
-import { SqliteBrowser } from "../../components/SqliteBrowser";
+import SqliteBrowser from "../../components/SqliteBrowser/SqliteBrowser";
 
 const SQLITE_EXTENSIONS = ["db", "sqlite", "sqlite3"];
 

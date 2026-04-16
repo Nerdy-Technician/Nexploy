@@ -376,11 +376,11 @@ module.exports.getStackConfigFiles = async (id) => {
         const extPattern = ALL_DISCOVERABLE_EXTENSIONS.map(e => `-name "*.${e}"`).join(" -o ");
         const IGNORED_NAMES = ["docker-compose.yml", "docker-compose.yaml", "compose.yml", "compose.yaml", ".nexploy.json"];
         const ignorePattern = IGNORED_NAMES.map(n => `! -name ${escapeShellArg(n)}`).join(" ");
-        const prunePattern = `-not \\( -name node_modules -o -name .git -o -name vendor -o -name __pycache__ -o -name .cache -o -name dist -o -name build -o -name .npm -o -name .yarn \\) -prune`;
+        const prunePattern = `\\( -name node_modules -o -name .git -o -name vendor -o -name __pycache__ -o -name .cache -o -name dist -o -name build -o -name .npm -o -name .yarn \\) -prune -o`;
 
         const findCmds = allowedPaths.map(p => {
             const depth = p === stack.directory ? STACK_MAXDEPTH : VOLUME_MAXDEPTH;
-            return `timeout ${FIND_TIMEOUT_SECS}s find ${escapeShellArg(p)} -maxdepth ${depth} ${prunePattern} -type f \\( ${extPattern} \\) ${ignorePattern} 2>/dev/null`;
+            return `timeout ${FIND_TIMEOUT_SECS}s find ${escapeShellArg(p)} -maxdepth ${depth} ${prunePattern} -type f \\( ${extPattern} \\) ${ignorePattern} -print 2>/dev/null`;
         });
         const cmd = `{ ${findCmds.join(" ; ")} ; } | head -n ${MAX_CONFIG_FILES}`;
 
